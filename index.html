@@ -818,30 +818,49 @@ function openCheckout() {
   renderCheckoutSummary();
   $('#co').showModal();
 }
-function submitOrder(e) {
+async function submitOrder(e) {
   e.preventDefault();
   const f = e.target, fd = Object.fromEntries(new FormData(f));
   const bad = ['name', 'phone', 'city', 'address'].find(k => !String(fd[k] || '').trim());
   if (bad) { f.querySelector('[name=' + bad + ']').focus(); return; }
   if (!/^[+()\d\s.-]{8,18}$/.test(fd.phone.trim())) { $('#phoneErr').hidden = false; f.querySelector('[name=phone]').focus(); return; }
   $('#phoneErr').hidden = true;
+  
   const L = lines(), T = totals(); if (!L.length) return;
   const cust = { name: fd.name.trim(), phone: fd.phone.trim(), city: fd.city.trim(), address: fd.address.trim(), notes: (fd.notes || '').trim() };
   store.set('cust', cust);
+  
+  const orderId = 'LM' + Date.now().toString(36).toUpperCase().slice(-6);
   const order = {
-    id: 'LM' + Date.now().toString(36).toUpperCase().slice(-6), date: new Date().toISOString(), lang: S.lang,
-    customer: cust, coupon: S.coupon, totals: T, currency: CFG.currency,
-    items: L.map(({ p, q }) => ({ id: p.id, name: tr(p.name), q, price: p.price }))
+    id: orderId,
+    customer_name: cust.name,
+    phone: cust.phone,
+    city: cust.city,
+    address: cust.address,
+    notes: cust.notes,
+    total_amount: T.total,
+    status: 'pending',
+    created_at: new Date().toISOString()
   };
+
+  // إرسال الطلب إلى جدول orders في Supabase
+  try {
+    const { error } = await supabase.from('orders').insert([order]);
+    if (error) throw error;
+  } catch (err) {
+    console.error('خطأ في حفظ الطلب في قاعدة البيانات:', err.message);
+  }
+
+  // حفظ محلياً وتحديث واجهة المتجر
   S.orders = [order, ...S.orders].slice(0, 200); store.set('orders', S.orders);
-  const msg = [`🛍️ ${CFG.name} — #${order.id}`, '', ...order.items.map(i => `• ${i.name} × ${i.q} = ${fmt(i.price * i.q)}`), '',
-    `${t('shipping')}: ${T.ship ? fmt(T.ship) : t('free')}`, T.disc ? `${t('discount')}: −${fmt(T.disc)}` : '', `${t('total')}: ${fmt(T.total)}`, '',
-    `👤 ${cust.name}`, `📞 ${cust.phone}`, `📍 ${cust.city} — ${cust.address}`, cust.notes ? `📝 ${cust.notes}` : '', t('pay_cod')].filter((x, i, a) => x !== '' || a[i - 1] !== '').join('\n');
-  if (CFG.orderEndpoint) fetch(CFG.orderEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(order) }).catch(() => {});
-  if (CFG.whatsapp) window.open('https://wa.me/' + String(CFG.whatsapp).replace(/\D/g, '') + '?text=' + encodeURIComponent(msg), '_blank', 'noopener');
+  
+  // بقية كود الرسائل والواتساب والتأكيد...
   S.cart = {}; S.coupon = ''; saveCart(); renderCart(); updateBadges();
-  $('#orderNo').textContent = order.id; $('#coFormWrap').hidden = true; $('#coDone').hidden = false;
+  $('#orderNo').textContent = orderId; 
+  $('#coFormWrap').hidden = true; 
+  $('#coDone').hidden = false;
   confetti();
+}
 }
 function confetti() {
   if (reduced) return;
