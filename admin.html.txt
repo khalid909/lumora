@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Lumora — لوحة التحكم</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#6d4aff">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/admin.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<!-- ============ شاشة الدخول ============ -->
+<section id="authScreen" class="auth-screen" hidden>
+  <div class="auth-card">
+    <div class="auth-logo">
+      <img src="icon.svg" alt="" width="42" height="42">
+      <h1>Lumora <span>Admin</span></h1>
+    </div>
+    <p class="auth-sub">سجّل دخولك للوصول إلى لوحة التحكم</p>
+
+    <form id="loginForm" class="form-stack">
+      <label>
+        <span>البريد الإلكتروني</span>
+        <input type="email" name="email" required autocomplete="email" dir="ltr"
+               placeholder="admin@lumora.com" inputmode="email">
+      </label>
+      <label>
+        <span>كلمة المرور</span>
+        <input type="password" name="password" required autocomplete="current-password"
+               minlength="6" dir="ltr">
+      </label>
+      <p class="err" id="authErr" hidden></p>
+      <button class="btn block" type="submit" id="loginBtn">
+        <span>تسجيل الدخول</span>
+      </button>
+    </form>
+
+    <p class="auth-note">🔒 محمي بـ Supabase Auth + Row Level Security</p>
+  </div>
+</section>
+
+<!-- ============ لوحة التحكم ============ -->
+<section id="dashboard" class="dashboard" hidden>
+  <header class="dash-header">
+    <div class="dash-brand">
+      <img src="icon.svg" alt="" width="28" height="28">
+      <span>Lumora Admin</span>
+    </div>
+    <div class="dash-actions">
+      <a href="./" class="btn ghost sm" target="_blank" rel="noopener">↗ عرض المتجر</a>
+      <button class="icon-btn" id="themeToggle" aria-label="تبديل الثيم">🌓</button>
+      <div class="user-chip">
+        <span id="userEmail">—</span>
+        <button class="btn danger sm" id="logoutBtn">خروج</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="dash-layout">
+    <!-- Sidebar -->
+    <aside class="dash-side">
+      <nav>
+        <button class="side-link on" data-panel="overview">📊 نظرة عامة</button>
+        <button class="side-link" data-panel="products">📦 المنتجات <span class="cnt" id="prodCount">0</span></button>
+        <button class="side-link" data-panel="orders">🛒 الطلبات <span class="cnt" id="ordCount">0</span></button>
+        <button class="side-link" data-panel="add">➕ إضافة منتج</button>
+        <button class="side-link" data-panel="settings">⚙️ الإعدادات</button>
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <main class="dash-main">
+
+      <!-- ===== نظرة عامة ===== -->
+      <section class="panel on" data-panel="overview">
+        <h2>نظرة عامة</h2>
+
+        <div class="stats-grid">
+          <div class="stat"><small>المنتجات</small><b id="stProducts">—</b></div>
+          <div class="stat"><small>الطلبات</small><b id="stOrders">—</b></div>
+          <div class="stat"><small>قيد الانتظار</small><b id="stPending">—</b></div>
+          <div class="stat"><small>الإيرادات</small><b id="stRevenue">—</b></div>
+          <div class="stat"><small>المخزون الكلي</small><b id="stStock">—</b></div>
+          <div class="stat"><small>المبيعات</small><b id="stSold">—</b></div>
+        </div>
+
+        <p id="alerts" class="muted" style="margin-top:14px;display:flex;gap:14px;flex-wrap:wrap"></p>
+
+        <h3 style="margin-top:30px">أحدث الطلبات</h3>
+        <div id="recentOrders" class="table-wrap">
+          <p class="muted" style="padding:20px">جارٍ التحميل…</p>
+        </div>
+      </section>
+
+      <!-- ===== المنتجات ===== -->
+      <section class="panel" data-panel="products">
+        <div class="panel-head">
+          <h2>المنتجات</h2>
+          <input id="prodSearch" type="search" placeholder="🔍 بحث… (Ctrl+K)">
+        </div>
+        <div id="productsList" class="table-wrap">
+          <p class="muted" style="padding:20px">جارٍ التحميل…</p>
+        </div>
+      </section>
+
+      <!-- ===== الطلبات ===== -->
+      <section class="panel" data-panel="orders">
+        <div class="panel-head">
+          <h2>الطلبات</h2>
+          <select id="orderFilter">
+            <option value="">كل الحالات</option>
+            <option value="pending">قيد الانتظار</option>
+            <option value="confirmed">مؤكد</option>
+            <option value="shipped">تم الشحن</option>
+            <option value="delivered">تم التسليم</option>
+            <option value="cancelled">ملغى</option>
+          </select>
+        </div>
+        <div id="ordersList">
+          <p class="muted" style="padding:20px">جارٍ التحميل…</p>
+        </div>
+      </section>
+
+      <!-- ===== إضافة منتج ===== -->
+      <section class="panel" data-panel="add">
+        <h2>إضافة منتج جديد</h2>
+        <form id="addProductForm" class="form-stack wide">
+          <div class="grid-2">
+            <label><span>الاسم (عربي) *</span><input name="n_ar" required></label>
+            <label><span>الاسم (فرنسي)</span><input name="n_fr"></label>
+            <label><span>الاسم (إنجليزي)</span><input name="n_en"></label>
+          </div>
+          <div class="grid-2">
+            <label><span>الفئة *</span>
+              <select name="cat" required>
+                <option value="tech">إلكترونيات</option>
+                <option value="fashion">أزياء</option>
+                <option value="home">المنزل</option>
+                <option value="beauty">جمال</option>
+                <option value="sport">رياضة</option>
+              </select>
+            </label>
+            <label><span>رمز تعبيري</span><input name="emoji" value="🛍️" maxlength="4"></label>
+          </div>
+          <div class="grid-3">
+            <label><span>السعر *</span><input name="price" type="number" step="0.01" min="0" required></label>
+            <label><span>السعر القديم</span><input name="old" type="number" step="0.01" min="0" value="0"></label>
+            <label><span>المخزون *</span><input name="stock" type="number" min="0" value="10" required></label>
+          </div>
+          <label><span>رابط صورة (اختياري)</span><input name="img" type="url" placeholder="https://…"></label>
+          <label><span>الوصف (يُنسخ للغات الثلاث)</span><textarea name="desc" rows="3"></textarea></label>
+          <p class="err" id="addErr" hidden></p>
+          <button class="btn" type="submit">💾 حفظ المنتج</button>
+        </form>
+      </section>
+
+      <!-- ===== الإعدادات ===== -->
+      <section class="panel" data-panel="settings">
+        <h2>الإعدادات</h2>
+
+        <div class="settings-block">
+          <h3>📤 تصدير / استيراد</h3>
+          <div class="row">
+            <button class="btn ghost sm" id="exportProducts">📥 تصدير المنتجات (JSON)</button>
+            <label class="btn ghost sm" style="cursor:pointer">
+              📤 استيراد منتجات
+              <input type="file" id="importProducts" accept="application/json,.json" hidden>
+            </label>
+            <button class="btn ghost sm" id="exportOrdersCsv">📊 تصدير الطلبات (CSV)</button>
+          </div>
+        </div>
+
+        <div class="settings-block">
+          <h3>👤 معلومات الحساب</h3>
+          <div id="accountInfo" class="account-info"></div>
+        </div>
+
+        <div class="settings-block">
+          <h3>🔐 الأمان</h3>
+          <p class="muted" style="font-size:.88rem;line-height:1.7">
+            • كل العمليات محمية بـ <b>Supabase Auth</b> + <b>RLS</b>.<br>
+            • لا يمكن لأي زائر غير مصرّح له القراءة أو الكتابة.<br>
+            • لتغيير كلمة المرور: Supabase → Authentication → Users.<br>
+            • لإضافة أدمن جديد: أضف المستخدم ثم أدخله في جدول <code>admins</code>.
+          </p>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</section>
+
+<!-- Toast -->
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="js/admin.js"></script>
+</body>
+</html>
