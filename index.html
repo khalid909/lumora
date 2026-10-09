@@ -389,13 +389,13 @@ details[open] summary{margin-bottom:12px}
 /* ===== إعدادات المتجر — عدّلها بحرية ===== */
 window.STORE_CONFIG = {
   name: 'Lumora',            // اسم المتجر
-  currency: 'USD',           // رمز العملة (مثال: DZD, EUR, MAD, SAR, USD)
-  whatsapp: '',              // رقمك بصيغة دولية بدون + (مثال: 213550000000) — تصلك الطلبات على واتساب
-  freeShipping: 100,         // حد التوصيل المجاني
-  shipping: 7,               // سعر التوصيل
+  currency: 'USD',            // رمز العملة (مثال: DZD, EUR, MAD, SAR, USD)
+  whatsapp: '',               // رقمك بصيغة دولية بدون + (مثال: 213550000000) — تصلك الطلبات على واتساب
+  freeShipping: 100,          // حد التوصيل المجاني
+  shipping: 7,                // سعر التوصيل
   coupons: { WELCOME10: 10, VIP20: 20 }, // أكواد الخصم (نسبة %)
   adminPassword: 'admin123', // ⚠️ غيّرها! (حماية بسيطة على المتصفح فقط)
-  orderEndpoint: ''          // اختياري: رابط Formspree/Make/Zapier لاستقبال الطلبات كـ JSON
+  orderEndpoint: ''           // اختياري: رابط Formspree/Make/Zapier لاستقبال الطلبات كـ JSON
 };
 
 /* الترجمات: العربية (RTL) • الفرنسية • الإنجليزية */
@@ -495,8 +495,6 @@ window.I18N = {
   }
 };
 
-/* المنتجات الافتراضية — يمكنك تعديلها أو إضافة منتجات من لوحة التحكم.
-   old: 0 = لا يوجد سعر قديم • img: رابط صورة (اختياري، وإلا يُعرض الرمز التعبيري) */
 window.DEFAULT_PRODUCTS = [
   { id: 1, cat: 'tech', emoji: '🎧', hue: 258, price: 89, old: 119, rating: 4.8, stock: 12, sold: 320,
     name: { ar: 'سماعات لاسلكية برو', fr: 'Écouteurs sans fil Pro', en: 'Pro Wireless Headphones' },
@@ -550,7 +548,23 @@ const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/* ---------- storage & helpers ---------- */
+const SUPABASE_URL = 'https://mpoqvpqeysgoqjtcwtfk.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1wb3F2cHFleXNnb3FqdGN3dGZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0ODE1NTUsImV4cCI6MjEwNzA1NzU1NX0.i0YEZkxAmy4wEnX0QP8Hm2erm1bxPFmO6sp78clevb0';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+async function fetchProductsFromSupabase() {
+  try {
+    const { data, error } = await supabase.from('products').select('*');
+    if (error) throw error;
+    if (data && data.length > 0) {
+      S.products = data;
+      renderAll();
+    }
+  } catch (err) {
+    console.error('خطأ في جلب المنتجات:', err.message);
+  }
+}
+
 const store = {
   get(k, d) { try { const v = localStorage.getItem('lm_' + k); return v ? JSON.parse(v) : d; } catch { return d; } },
   set(k, v) { try { localStorage.setItem('lm_' + k, JSON.stringify(v)); } catch {} },
@@ -581,9 +595,8 @@ const byId = id => S.products.find(p => p.id === id);
 const rating = p => Number(p.rating) || 4.5;
 const off = p => (p.old > p.price ? Math.round((1 - p.price / p.old) * 100) : 0);
 
-/* ---------- smart search (accent-insensitive + typo tolerant) ---------- */
 const norm = s => String(s || '').toLowerCase().normalize('NFD')
-  .replace(/[ً-ٰٟ̀-ͯ]/g, '')
+  .replace(/[ً-ٰٟ̀-ͯ]/g, '')
   .replace(/[أإآ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه').trim();
 function lev(a, b) {
   const m = a.length, n = b.length; if (!m) return n; if (!n) return m;
@@ -597,7 +610,7 @@ function lev(a, b) {
 }
 const fuzzy = (tk, hay) => {
   if (tk.length < 4) return false;
-  const max = tk.length >= 7 ? 2 : 1;               // عدد الأخطاء المسموح بها
+  const max = tk.length >= 7 ? 2 : 1;
   return hay.split(' ').some(w => Math.abs(w.length - tk.length) <= 2 && (lev(tk, w) <= max || lev(tk, w.slice(0, tk.length)) <= max));
 };
 const hayCache = new WeakMap();
@@ -627,7 +640,6 @@ function visible() {
   return list.sort(sorts[S.sort] || sorts.pop);
 }
 
-/* ---------- UI primitives ---------- */
 let toastT;
 function toast(msg) {
   const el = $('#toast'); el.textContent = msg; el.classList.add('on');
@@ -635,19 +647,17 @@ function toast(msg) {
 }
 const thumb = p => p.img
   ? `<img src="${esc(p.img)}" alt="${esc(tr(p.name))}" loading="lazy" decoding="async">`
-  : `<div class="ph" style="--h:${Number(p.hue) || 260}"><span>${esc(p.emoji || '🛍️')}</span></div>`;
+  : `<div class="ph" style="--h:${Number(p.hue) \vert{}\vert{} 260}"><span>${esc(p.emoji || '🛍️')}</span></div>`;
 const stars = r => `<span class="stars" style="--v:${(r / 5 * 100).toFixed(0)}%" aria-hidden="true">★★★★★</span>`;
 const bump = el => { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); };
 
 const io = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -40px 0px' }) : null;
 const observe = root => $$('.reveal:not(.in)', root).forEach(el => io ? io.observe(el) : el.classList.add('in'));
 
-/* ---------- rendering ---------- */
 function card(p) {
   const w = S.wish.includes(p.id), o = off(p);
   return `<article class="card reveal" data-id="${p.id}">
-    <div class="thumb" data-act="open">${thumb(p)}
-      ${o ? `<span class="tag">-${o}%</span>` : ''}${p.stock <= 0 ? `<span class="tag out">${t('out_stock')}</span>` : ''}
+    <div class="thumb" data-act="open">${thumb(p)}${o ? `<span class="tag">-${o}%</span>` : ''}${p.stock <= 0 ? `<span class="tag out">${t('out_stock')}</span>` : ''}
       <button class="heart ${w ? 'on' : ''}" data-act="wish" aria-pressed="${w}" aria-label="${esc(t('wishlist'))}">${w ? '♥' : '♡'}</button>
     </div>
     <div class="body">
@@ -669,7 +679,7 @@ function renderGrid() {
   const maxP = Math.ceil(Math.max(1, ...S.products.map(p => p.price)));
   const rg = $('#maxRange'); rg.max = maxP; rg.value = S.max || maxP;
   $('#maxLabel').textContent = fmt(+rg.value);
-  $('#count').textContent = `${list.length} ${t('results')}`;
+  $('#count').textContent = `${list.length}${t('results')}`;
   const g = $('#grid');
   g.innerHTML = list.length ? list.map(card).join('')
     : `<div class="empty"><div class="big">🔎</div><h3>${t('no_results')}</h3><p>${t('no_results_sub')}</p></div>`;
@@ -688,7 +698,7 @@ function renderRecent() {
 }
 function renderHero() {
   const top = [...S.products].sort((a, b) => (b.sold || 0) - (a.sold || 0)).slice(0, 3);
-  $('#heroCards').innerHTML = top.map((p, i) => `<div class="hc c${i}"><div class="ph" style="--h:${Number(p.hue) || 260}"><span>${esc(p.emoji || '🛍️')}</span></div><div><b>${esc(tr(p.name))}</b><small>${fmt(p.price)}</small></div></div>`).join('');
+  $('#heroCards').innerHTML = top.map((p, i) => `<div class="hc c${i}"><div class="ph" style="--h:${Number(p.hue) \vert{}\vert{} 260}"><span>${esc(p.emoji || '🛍️')}</span></div><div><b>${esc(tr(p.name))}</b><small>${fmt(p.price)}</small></div></div>`).join('');
 }
 function updateBadges() {
   const n = Object.values(S.cart).reduce((a, b) => a + b, 0);
@@ -697,7 +707,6 @@ function updateBadges() {
 }
 function renderAll() { renderCats(); renderGrid(); renderRecent(); renderHero(); renderCart(); updateBadges(); }
 
-/* ---------- theme & language ---------- */
 function applyTheme() {
   document.documentElement.dataset.theme = S.theme;
   $('meta[name=theme-color]').content = S.theme === 'dark' ? '#0c0a1a' : '#6d4aff';
@@ -710,20 +719,18 @@ function applyLang() {
   $$('#langs [data-lang]').forEach(b => b.classList.toggle('on', b.dataset.lang === S.lang));
   $('#sort').value = S.sort;
   $('#brandName').textContent = CFG.name; $$('.brand2').forEach(e => e.textContent = CFG.name);
-  document.title = `${CFG.name} — ${t('tagline')}`;
+  document.title = `${CFG.name} —${t('tagline')}`;
   renderAll();
   if ($('#pd').open && currentPid) fillProduct(currentPid);
   if ($('#co').open) renderCheckoutSummary();
 }
 
-/* ---------- wishlist ---------- */
 function toggleWish(id) {
   S.wish = S.wish.includes(id) ? S.wish.filter(x => x !== id) : [...S.wish, id];
   store.set('wish', S.wish); renderGrid(); renderRecent(); updateBadges(); bump($('#wishCount'));
   if ($('#pd').open && currentPid) fillProduct(currentPid);
 }
 
-/* ---------- cart ---------- */
 const lines = () => Object.entries(S.cart).map(([id, q]) => ({ p: byId(+id), q })).filter(l => l.p);
 function totals() {
   const L = lines(), sub = L.reduce((a, { p, q }) => a + p.price * q, 0);
@@ -757,8 +764,7 @@ function renderCart() {
       <div class="qty"><button data-q="-1" aria-label="-">−</button><span>${q}</span><button data-q="1" aria-label="+">+</button></div></div>
       <button class="rm" data-rm aria-label="Remove">✕</button></div>`).join('');
   foot.innerHTML = `<form class="coupon" id="couponForm"><input id="couponIn" value="${esc(S.coupon)}" placeholder="${esc(t('coupon_ph'))}" autocomplete="off" dir="ltr"><button class="btn ghost sm">${t('apply')}</button></form>
-    <dl class="sum"><div><dt>${t('subtotal')}</dt><dd>${fmt(T.sub)}</dd></div>
-    ${T.disc ? `<div class="g"><dt>${t('discount')} (${T.pct}%)</dt><dd>−${fmt(T.disc)}</dd></div>` : ''}
+    <dl class="sum"><div><dt>${t('subtotal')}</dt><dd>${fmt(T.sub)}</dd></div>${T.disc ? `<div class="g"><dt>${t('discount')} (${T.pct}%)</dt><dd>−${fmt(T.disc)}</dd></div>` : ''}
     <div><dt>${t('shipping')}</dt><dd>${T.ship ? fmt(T.ship) : t('free')}</dd></div>
     <div class="tot"><dt>${t('total')}</dt><dd>${fmt(T.total)}</dd></div></dl>
     <button class="btn block lg" id="goCheckout">${t('checkout')}</button>`;
@@ -772,7 +778,6 @@ function closeDrawer() {
   $('#drawer').classList.remove('open'); $('#scrim').classList.remove('on'); $('#drawer').inert = true; lastFocus?.focus?.();
 }
 
-/* ---------- product dialog ---------- */
 let currentPid = null;
 function fillProduct(id) {
   const p = byId(id); if (!p) return;
@@ -801,7 +806,6 @@ function openProduct(id) {
   renderRecent();
 }
 
-/* ---------- checkout ---------- */
 function renderCheckoutSummary() {
   const T = totals();
   $('#coSummary').innerHTML = lines().map(({ p, q }) => `<div class="l"><span>${esc(tr(p.name))} × ${q}</span><b>${fmt(p.price * q)}</b></div>`).join('') +
@@ -843,7 +847,6 @@ async function submitOrder(e) {
     created_at: new Date().toISOString()
   };
 
-  // إرسال الطلب إلى جدول orders في Supabase
   try {
     const { error } = await supabase.from('orders').insert([order]);
     if (error) throw error;
@@ -851,17 +854,20 @@ async function submitOrder(e) {
     console.error('خطأ في حفظ الطلب في قاعدة البيانات:', err.message);
   }
 
-  // حفظ محلياً وتحديث واجهة المتجر
   S.orders = [order, ...S.orders].slice(0, 200); store.set('orders', S.orders);
   
-  // بقية كود الرسائل والواتساب والتأكيد...
+  const msg = [`🛍️ ${CFG.name} — #${orderId}`, '', ...L.map(i => `• ${tr(i.p.name)} × ${i.q} =${fmt(i.p.price * i.q)}`), '',
+    `${t('shipping')}:${T.ship ? fmt(T.ship) : t('free')}`, T.disc ? `${t('discount')}: −${fmt(T.disc)}` : '', `${t('total')}:${fmt(T.total)}`, '',
+    `👤 ${cust.name}`, `📞 ${cust.phone}`, `📍 ${cust.city} —${cust.address}`, cust.notes ? `📝 ${cust.notes}` : '', t('pay_cod')].filter((x, i, a) => x !== '' || a[i - 1] !== '').join('\n');
+  if (CFG.whatsapp) window.open('https://wa.me/' + String(CFG.whatsapp).replace(/\D/g, '') + '?text=' + encodeURIComponent(msg), '_blank', 'noopener');
+  
   S.cart = {}; S.coupon = ''; saveCart(); renderCart(); updateBadges();
   $('#orderNo').textContent = orderId; 
   $('#coFormWrap').hidden = true; 
   $('#coDone').hidden = false;
   confetti();
 }
-}
+
 function confetti() {
   if (reduced) return;
   const c = $('#confetti'), x = c.getContext && c.getContext('2d'); if (!x) return;
@@ -876,7 +882,6 @@ function confetti() {
   })();
 }
 
-/* ---------- admin (client-side demo panel) ---------- */
 let adminOK = false;
 async function adminRender() {
   const body = $('#adBody');
@@ -885,7 +890,6 @@ async function adminRender() {
     return;
   }
 
-  // جلب الطلبات الحقيقية من جدول orders في Supabase
   let ordersListHtml = `<p class="note">${t('ad_none')}</p>`;
   try {
     const { data: dbOrders, error } = await supabase
@@ -898,8 +902,8 @@ async function adminRender() {
       ordersListHtml = dbOrders.map(o => `
         <div class="arow">
           <div>
-            <b>#${esc(o.id)}</b> — ${esc(o.customer_name)} 
-            <small>${esc(o.phone)} • ${esc(o.city)} • ${new Date(o.created_at || Date.now()).toLocaleString()}<br>
+            <b>#${esc(o.id)}</b> —${esc(o.customer_name)} 
+            <small>${esc(o.phone)} • ${esc(o.city)} •${new Date(o.created_at || Date.now()).toLocaleString()}<br>
             المبلغ الإجمالي: ${fmt(o.total_amount)} (${o.status})</small>
           </div>
           <b>${fmt(o.total_amount)}</b>
@@ -918,194 +922,4 @@ async function adminRender() {
         <div class="f2"><label>${t('price')}<input name="price" type="number" step="0.01" min="0" required></label><label>${t('old_price')}<input name="old" type="number" step="0.01" min="0"></label>
           <label>${t('stock')}<input name="stock" type="number" min="0" value="10"></label><label>${t('category')}<select name="cat">${catOpts}</select></label></div>
         <div class="f2"><label>${t('emoji')}<input name="emoji" value="🛍️" maxlength="4"></label><label>${t('image')}<input name="img" type="url" placeholder="https://…"></label></div>
-        <label>${t('desc')}<textarea name="desc" rows="2"></textarea></label>
-        <button class="btn">${t('ad_save')}</button></form></details>
-    <details><summary>${t('ad_products')} (${S.products.length})</summary>${S.products.map(p => `<div class="arow"><div>${esc(p.emoji || '')} ${esc(tr(p.name))}<small>${fmt(p.price)} • ${t('stock')}:${p.stock}</small></div><button class="dbtn" data-del="${p.id}">🗑</button></div>`).join('')}</details>
-    <details><summary>${t('ad_orders')}</summary>${ordersListHtml}</details>
-    <details><summary>${t('ad_data')}</summary><div class="row">
-      <button class="btn ghost sm" id="adExp">${t('ad_export')}</button>
-      <label class="btn ghost sm" style="cursor:pointer">${t('ad_import')}<input type="file" id="adImp" accept="application/json" hidden></label>
-      <button class="btn ghost sm" id="adCsv">${t('ad_csv')}</button>
-      <button class="btn ghost sm" id="adReset">${t('ad_reset')}</button></div></details>`;
-}
-function persistProducts() { store.set('products', S.products); renderAll(); adminRender(); }
-function addAdminProduct(f) {
-  const fd = Object.fromEntries(new FormData(f));
-  const first = fd.n_en || fd.n_fr || fd.n_ar; if (!first) { f.querySelector('[name=n_en]').focus(); return; }
-  const name = { ar: fd.n_ar || first, fr: fd.n_fr || first, en: fd.n_en || first };
-  const d = (fd.desc || '').trim();
-  S.products.push({
-    id: Date.now(), cat: fd.cat, emoji: fd.emoji || '🛍️', hue: Math.floor(Math.random() * 360), img: (fd.img || '').trim(),
-    price: +fd.price || 0, old: +fd.old || 0, rating: 4.6, stock: +fd.stock || 0, sold: 0, name, desc: { ar: d, fr: d, en: d }
-  });
-  persistProducts(); toast('✓');
-}
-function bindAdmin() {
-  const body = $('#adBody');
-  body.addEventListener('submit', e => {
-    e.preventDefault();
-    if (e.target.id === 'adLogin') {
-      if ($('#adPw').value === CFG.adminPassword) { adminOK = true; adminRender(); } else $('#adErr').hidden = false;
-    } else if (e.target.id === 'adForm') addAdminProduct(e.target);
-  });
-  body.addEventListener('click', e => {
-    const del = e.target.closest('[data-del]');
-    if (del) { S.products = S.products.filter(p => p.id !== +del.dataset.del); delete S.cart[del.dataset.del]; saveCart(); persistProducts(); return; }
-    const id = e.target.id;
-    if (id === 'adExp') download('products.json', JSON.stringify(S.products, null, 2), 'application/json');
-    if (id === 'adCsv') {
-      const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
-      const rows = [['id', 'date', 'name', 'phone', 'city', 'address', 'items', 'total', 'currency'], ...S.orders.map(o => [o.id, o.date, o.customer.name, o.customer.phone, o.customer.city, o.customer.address, o.items.map(i => i.name + 'x' + i.q).join(' | '), o.totals.total, o.currency])];
-      download('orders.csv', '﻿' + rows.map(r => r.map(q).join(',')).join('\n'), 'text/csv');
-    }
-    if (id === 'adReset' && confirm(t('confirm_reset'))) { store.del('products'); S.products = window.DEFAULT_PRODUCTS.slice(); renderAll(); adminRender(); }
-  });
-  body.addEventListener('change', e => {
-    if (e.target.id !== 'adImp' || !e.target.files[0]) return;
-    const r = new FileReader();
-    r.onload = () => {
-      try {
-        const arr = JSON.parse(r.result);
-        if (!Array.isArray(arr) || !arr.every(p => p && p.id && p.name && typeof p.price === 'number')) throw 0;
-        S.products = arr; persistProducts();
-      } catch { toast('JSON ✗'); }
-    };
-    r.readAsText(e.target.files[0]);
-  });
-}
-
-/* ---------- events ---------- */
-function gridClick(e) {
-  const b = e.target.closest('[data-act]'), c = e.target.closest('.card');
-  if (!b || !c) return;
-  const id = +c.dataset.id;
-  if (b.dataset.act === 'add') addToCart(id);
-  else if (b.dataset.act === 'wish') toggleWish(id);
-  else if (b.dataset.act === 'open') openProduct(id);
-}
-function bind() {
-  $('#grid').addEventListener('click', gridClick);
-  $('#recentGrid').addEventListener('click', gridClick);
-  $('#pdBody').addEventListener('click', e => {
-    const b = e.target.closest('[data-act]'); if (!b) return;
-    const c = b.closest('.card');
-    if (c) return gridClick(e);                      // related cards
-    if (b.dataset.act === 'add') addToCart(currentPid);
-    else if (b.dataset.act === 'wish') toggleWish(currentPid);
-    else if (b.dataset.act === 'share') {
-      const url = location.href.split('#')[0] + '#p' + currentPid, p = byId(currentPid);
-      if (navigator.share) navigator.share({ title: tr(p.name), url }).catch(() => {});
-      else navigator.clipboard?.writeText(url).then(() => toast(t('copied')));
-    }
-  });
-  $('#cats').addEventListener('click', e => { const b = e.target.closest('[data-cat]'); if (!b) return; S.cat = b.dataset.cat; renderCats(); renderGrid(); });
-  $('#sort').addEventListener('change', e => { S.sort = e.target.value; renderGrid(); });
-  $('#maxRange').addEventListener('input', e => { const v = +e.target.value; S.max = v >= +e.target.max ? 0 : v; renderGrid(); });
-  $('#dealsBtn').addEventListener('click', () => { S.sort = 'deal'; $('#sort').value = 'deal'; renderGrid(); });
-  $('#wishBtn').addEventListener('click', e => { S.onlyWish = !S.onlyWish; e.currentTarget.setAttribute('aria-pressed', S.onlyWish); renderGrid(); $('#shop').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' }); });
-
-  let dt; const q = $('#q');
-  q.addEventListener('input', () => { clearTimeout(dt); dt = setTimeout(() => { S.q = q.value; renderGrid(); }, 120); });
-  $('#searchForm').addEventListener('submit', e => { e.preventDefault(); S.q = q.value; renderGrid(); $('#shop').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' }); });
-  document.addEventListener('keydown', e => {
-    if (e.key === '/' && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && !document.querySelector('dialog[open]')) { e.preventDefault(); q.focus(); }
-    if (e.key === 'Escape') closeDrawer();
-  });
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (SR) {
-    const mic = $('#mic'); mic.hidden = false;
-    mic.addEventListener('click', () => {
-      const r = new SR(); r.lang = { ar: 'ar-SA', fr: 'fr-FR', en: 'en-US' }[S.lang];
-      r.onresult = ev => { q.value = ev.results[0][0].transcript; S.q = q.value; renderGrid(); };
-      r.onend = r.onerror = () => mic.classList.remove('rec');
-      mic.classList.add('rec'); try { r.start(); } catch { mic.classList.remove('rec'); }
-    });
-  }
-
-  $('#langs').addEventListener('click', e => { const b = e.target.closest('[data-lang]'); if (!b || b.dataset.lang === S.lang) return; vt(() => { S.lang = b.dataset.lang; store.set('lang', S.lang); applyLang(); }); });
-  $('#themeBtn').addEventListener('click', () => vt(() => { S.theme = S.theme === 'dark' ? 'light' : 'dark'; store.set('theme', S.theme); applyTheme(); }));
-
-  $('#cartBtn').addEventListener('click', openDrawer);
-  $('#scrim').addEventListener('click', closeDrawer);
-  $('#drawer').addEventListener('click', e => {
-    if (e.target.closest('[data-close-drawer]')) return closeDrawer();
-    if (e.target.id === 'goCheckout') return openCheckout();
-    const ln = e.target.closest('.line'); if (!ln) return;
-    const id = +ln.dataset.id, qb = e.target.closest('[data-q]');
-    if (qb) setQty(id, +qb.dataset.q);
-    else if (e.target.closest('[data-rm]')) { delete S.cart[id]; saveCart(); renderCart(); updateBadges(); }
-  });
-  $('#drawer').addEventListener('submit', e => {
-    if (e.target.id !== 'couponForm') return; e.preventDefault();
-    const v = $('#couponIn').value.trim().toUpperCase();
-    if (!v) { S.coupon = ''; } else if (CFG.coupons[v]) { S.coupon = v; toast(t('coupon_ok')); } else { toast(t('coupon_bad')); return; }
-    saveCart(); renderCart();
-  });
-  $('#coForm').addEventListener('submit', submitOrder);
-
-  $$('dialog').forEach(d => {
-    d.addEventListener('click', e => { if (e.target === d) d.close(); });
-    d.addEventListener('close', () => { if (d.id === 'pd') { currentPid = null; try { history.replaceState(null, '', location.pathname + location.search); } catch {} } });
-  });
-  document.addEventListener('click', e => { const b = e.target.closest('[data-close]'); if (b) b.closest('dialog')?.close(); });
-  $('#adminBtn').addEventListener('click', () => { adminRender(); $('#ad').showModal(); });
-  bindAdmin();
-
-  window.addEventListener('scroll', () => $('#header').classList.toggle('sc', scrollY > 8), { passive: true });
-  if (matchMedia('(hover:hover) and (pointer:fine)').matches && !reduced) {
-    const tilt = e => {
-      const c = e.target.closest('.card'); if (!c) return;
-      const r = c.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
-      c.style.setProperty('--rx', (-y * 7).toFixed(2) + 'deg'); c.style.setProperty('--ry', (x * 7).toFixed(2) + 'deg');
-    };
-    const untilt = e => { const c = e.target.closest?.('.card'); if (c && !c.contains(e.relatedTarget)) { c.style.setProperty('--rx', '0deg'); c.style.setProperty('--ry', '0deg'); } };
-    ['#grid', '#recentGrid'].forEach(s => { $(s).addEventListener('pointermove', tilt); $(s).addEventListener('mouseout', untilt); });
-    $('.hero').addEventListener('pointermove', e => { const hc = $('#heroCards'); hc.style.setProperty('--mx', (e.clientX / innerWidth - .5).toFixed(2)); hc.style.setProperty('--my', (e.clientY / innerHeight - .5).toFixed(2)); });
-  }
-
-  let deferred;
-  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; $('#installBtn').hidden = false; });
-  $('#installBtn').addEventListener('click', async () => { if (!deferred) return; deferred.prompt(); await deferred.userChoice; deferred = null; $('#installBtn').hidden = true; });
-}
-
-/* ---------- countdown to local midnight ---------- */
-function countdown() {
-  const p = n => String(n).padStart(2, '0');
-  const tick = () => {
-    const now = new Date(), end = new Date(now); end.setHours(24, 0, 0, 0);
-    const s = Math.max(0, Math.floor((end - now) / 1000));
-    $('#cdH').textContent = p(Math.floor(s / 3600)); $('#cdM').textContent = p(Math.floor(s % 3600 / 60)); $('#cdS').textContent = p(s % 60);
-  };
-  tick(); setInterval(tick, 1000);
-}
-
-/* ---------- init ---------- */
-applyTheme(); bind(); applyLang(); countdown();
-$('#year').textContent = new Date().getFullYear();
-const m = /^#p(\d+)$/.exec(location.hash); if (m) openProduct(+m[1]);
-if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => {});
-})();
-// إعداد الاتصال بـ Supabase
-const SUPABASE_URL = 'https://mpoqvpqeysgoqjtcwtfk.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1wb3F2cHFleXNnb3FqdGN3dGZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0ODE1NTUsImV4cCI6MjEwNzA1NzU1NX0.i0YEZkxAmy4wEnX0QP8Hm2erm1bxPFmO6sp78clevb0';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-// دالة جلب المنتجات من قاعدة البيانات بدلاً من القائمة الوهمية
-async function fetchProductsFromSupabase() {
-  try {
-    const { data, error } = await supabase.from('products').select('*');
-    if (error) throw error;
-    if (data && data.length > 0) {
-      S.products = data;
-      renderAll();
-    }
-  } catch (err) {
-    console.error('خطأ في جلب المنتجات:', err.message);
-  }
-}
-
-// استدعاء الدالة بعد تشغيل المتجر
-fetchProductsFromSupabase();
-  
-</script>
-</body>
-</html>
+        <label>${t('
