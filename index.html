@@ -1045,8 +1045,7 @@ if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigat
 // إعداد الاتصال بـ Supabase
 const SUPABASE_URL = 'https://mpoqvpqeysgoqjtcwtfk.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1wb3F2cHFleXNnb3FqdGN3dGZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0ODE1NTUsImV4cCI6MjEwNzA1NzU1NX0.i0YEZkxAmy4wEnX0QP8Hm2erm1bxPFmO6sp78clevb0';
-const supabase = window.supabase.createClient(https://mpoqvpqeysgoqjtcwtfk.supabase.co, eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1wb3F2cHFleXNnb3FqdGN3dGZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0ODE1NTUsImV4cCI6MjEwNzA1NzU1NX0.i0YEZkxAmy4wEnX0QP8Hm2erm1bxPFmO6sp78clevb0);
-
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // دالة جلب المنتجات من قاعدة البيانات بدلاً من القائمة الوهمية
 async function fetchProductsFromSupabase() {
   try {
