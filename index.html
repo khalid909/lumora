@@ -878,15 +878,39 @@ function confetti() {
 
 /* ---------- admin (client-side demo panel) ---------- */
 let adminOK = false;
-const download = (name, text, type) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1500); };
-function adminRender() {
+async function adminRender() {
   const body = $('#adBody');
   if (!adminOK) {
     body.innerHTML = `<h2>${t('admin')}</h2><form id="adLogin" class="form" style="max-width:340px;margin-top:14px"><label>${t('ad_pass')}<input type="password" id="adPw" required autocomplete="current-password"></label><button class="btn">${t('ad_login')}</button><p class="err" id="adErr" hidden>${t('ad_wrong')}</p></form>`;
     return;
   }
+
+  // جلب الطلبات الحقيقية من جدول orders في Supabase
+  let ordersListHtml = `<p class="note">${t('ad_none')}</p>`;
+  try {
+    const { data: dbOrders, error } = await supabase
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50);
+      
+    if (!error && dbOrders && dbOrders.length > 0) {
+      ordersListHtml = dbOrders.map(o => `
+        <div class="arow">
+          <div>
+            <b>#${esc(o.id)}</b> — ${esc(o.customer_name)} 
+            <small>${esc(o.phone)} • ${esc(o.city)} • ${new Date(o.created_at || Date.now()).toLocaleString()}<br>
+            المبلغ الإجمالي: ${fmt(o.total_amount)} (${o.status})</small>
+          </div>
+          <b>${fmt(o.total_amount)}</b>
+        </div>
+      `).join('');
+    }
+  } catch (err) {
+    console.error('خطأ في جلب الطلبات من قاعدة البيانات:', err);
+  }
+
   const catOpts = CATS.map(c => `<option value="${c}">${t('cat_' + c)}</option>`).join('');
-  const orders = S.orders.length ? S.orders.slice(0, 50).map(o => `<div class="arow"><div><b>#${esc(o.id)}</b> — ${esc(o.customer.name)} <small>${esc(o.customer.phone)} • ${esc(o.customer.city)} • ${new Date(o.date).toLocaleString()}<br>${o.items.map(i => esc(i.name) + '×' + i.q).join(', ')}</small></div><b>${fmt(o.totals.total)}</b></div>`).join('') : `<p class="note">${t('ad_none')}</p>`;
   body.innerHTML = `<h2>${t('admin')}</h2><p class="note">${t('ad_note')}</p><br>
     <details open><summary>${t('ad_add')}</summary>
       <form id="adForm" class="form">
@@ -896,8 +920,8 @@ function adminRender() {
         <div class="f2"><label>${t('emoji')}<input name="emoji" value="🛍️" maxlength="4"></label><label>${t('image')}<input name="img" type="url" placeholder="https://…"></label></div>
         <label>${t('desc')}<textarea name="desc" rows="2"></textarea></label>
         <button class="btn">${t('ad_save')}</button></form></details>
-    <details><summary>${t('ad_products')} (${S.products.length})</summary>${S.products.map(p => `<div class="arow"><div>${esc(p.emoji || '')} ${esc(tr(p.name))}<small>${fmt(p.price)} • ${t('stock')}: ${p.stock}</small></div><button class="dbtn" data-del="${p.id}">🗑</button></div>`).join('')}</details>
-    <details><summary>${t('ad_orders')} (${S.orders.length})</summary>${orders}</details>
+    <details><summary>${t('ad_products')} (${S.products.length})</summary>${S.products.map(p => `<div class="arow"><div>${esc(p.emoji || '')} ${esc(tr(p.name))}<small>${fmt(p.price)} • ${t('stock')}:${p.stock}</small></div><button class="dbtn" data-del="${p.id}">🗑</button></div>`).join('')}</details>
+    <details><summary>${t('ad_orders')}</summary>${ordersListHtml}</details>
     <details><summary>${t('ad_data')}</summary><div class="row">
       <button class="btn ghost sm" id="adExp">${t('ad_export')}</button>
       <label class="btn ghost sm" style="cursor:pointer">${t('ad_import')}<input type="file" id="adImp" accept="application/json" hidden></label>
