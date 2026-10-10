@@ -2,8 +2,6 @@
    Lumora Admin Panel — Supabase Auth + RLS
    ============================================================ */
 (() => {
-
-   let customers = [];
 'use strict';
 
 const SUPABASE_URL = 'https://mpoqvpqeysgoqjtcwtfk.supabase.co';
@@ -39,7 +37,7 @@ try {
 let session = null;
 let products = [];
 let orders = [];
-let customers = [];
+
 const savedTheme = localStorage.getItem('lumora_admin_theme') ||
   (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
 document.documentElement.dataset.theme = savedTheme;
@@ -99,8 +97,9 @@ async function showDashboard() {
     <div><b>الدور:</b> <span class="badge confirmed">${esc(session.role || 'admin')}</span></div>
     <div><b>آخر دخول:</b> <span>${dt(session.user.last_sign_in_at)}</span></div>
   `;
-   
-await Promise.all([loadProducts(), loadOrders(), loadStats(), loadCustomers()]);
+
+  await Promise.all([loadProducts(), loadOrders(), loadStats()]);
+  subscribeRealtime();
 }
 
 $('#loginForm').addEventListener('submit', async e => {
@@ -208,6 +207,7 @@ function renderProducts() {
     : products;
 
   const box = $('#productsList');
+  if (!box) return;
   if (!list.length) {
     box.innerHTML = '<p class="muted" style="padding:20px">لا توجد منتجات مطابقة</p>';
     return;
@@ -273,70 +273,13 @@ async function loadOrders() {
   renderOrders();
   const cnt = $('#ordCount'); if (cnt) cnt.textContent = orders.length;
 }
-async function loadCustomers() {
-  const { data, error } = await sb
-    .from('profiles')
-    .select('*')
-    .order('created_at', { ascending: false });
 
-  if (error) { console.error('customers:', error); return; }
-  customers = data || [];
-  renderCustomers();
-  const cnt = $('#custCount'); if (cnt) cnt.textContent = customers.length;
-  await loadCustomerStats();
-}
-
-async function loadCustomerStats() {
-  const { data, error } = await sb.from('customer_stats').select('*').single();
-  if (error || !data) return;
-  $('#stCustomers').textContent = data.total_customers ?? 0;
-  $('#stCustWeek').textContent = data.new_this_week ?? 0;
-  $('#stCustToday').textContent = data.new_today ?? 0;
-  $('#stAvgSpent').textContent = fmt(data.avg_spent);
-}
-
-function renderCustomers() {
-  const q = ($('#custSearch')?.value || '').toLowerCase().trim();
-  const list = q
-    ? customers.filter(c =>
-        (c.full_name || '').toLowerCase().includes(q) ||
-        (c.phone || '').includes(q) ||
-        (c.city || '').toLowerCase().includes(q))
-    : customers;
-
-  const box = $('#customersList');
-  if (!list.length) {
-    box.innerHTML = '<p class="muted" style="padding:20px">لا يوجد عملاء بعد</p>';
-    return;
-  }
-
-  box.innerHTML = `
-    <table>
-      <thead><tr>
-        <th>الاسم</th><th>الهاتف</th><th>المدينة</th><th>الطلبات</th><th>الإنفاق</th><th>التسجيل</th><th></th>
-      </tr></thead>
-      <tbody>${list.map(c => `
-        <tr>
-          <td><b>${esc(c.full_name || '—')}</b></td>
-          <td dir="ltr">${esc(c.phone || '—')}</td>
-          <td>${esc(c.city || '—')}</td>
-          <td>${c.total_orders || 0}</td>
-          <td><b>${fmt(c.total_spent)}</b></td>
-          <td><small class="muted">${dt(c.created_at)}</small></td>
-          <td>
-            ${c.phone ? `<a class="btn ghost sm" href="https://wa.me/${String(c.phone).replace(/\D/g,'')}" target="_blank" rel="noopener" title="واتساب">💬</a>` : ''}
-          </td>
-        </tr>`).join('')}
-      </tbody>
-    </table>`;
-}
-
-$('#custSearch')?.addEventListener('input', () => renderCustomers());
 function renderOrders() {
   const filter = $('#orderFilter')?.value || '';
   const list = filter ? orders.filter(o => o.status === filter) : orders;
 
   const box = $('#ordersList');
+  if (!box) return;
   if (!list.length) {
     box.innerHTML = '<p class="muted" style="padding:20px">لا توجد طلبات</p>';
     return;
@@ -414,66 +357,6 @@ $('#ordersList').addEventListener('change', async e => {
 
 $('#orderFilter')?.addEventListener('change', renderOrders);
 
-/* ========== CUSTOMERS ========== */
-async function loadCustomers() {
-  const { data, error } = await sb
-    .from('profiles')
-    .select('*')
-    .order('created_at', { ascending: false });
-  if (error) { console.error('customers:', error); return; }
-  customers = data || [];
-  renderCustomers();
-  const cnt = $('#custCount'); if (cnt) cnt.textContent = customers.length;
-  loadCustomerStats();
-}
-
-async function loadCustomerStats() {
-  const { data, error } = await sb.from('customer_stats').select('*').single();
-  if (error || !data) return;
-  $('#stCustomers').textContent = data.total_customers ?? 0;
-  $('#stCustWeek').textContent = data.new_this_week ?? 0;
-  $('#stCustToday').textContent = data.new_today ?? 0;
-  $('#stAvgSpent').textContent = fmt(data.avg_spent);
-}
-
-function renderCustomers() {
-  const q = ($('#custSearch')?.value || '').toLowerCase().trim();
-  const list = q
-    ? customers.filter(c =>
-        (c.full_name || '').toLowerCase().includes(q) ||
-        (c.phone || '').includes(q) ||
-        (c.city || '').toLowerCase().includes(q))
-    : customers;
-
-  const box = $('#customersList');
-  if (!box) return;
-  if (!list.length) {
-    box.innerHTML = '<p class="muted" style="padding:20px">لا يوجد عملاء بعد</p>';
-    return;
-  }
-
-  box.innerHTML = `
-    <table>
-      <thead><tr>
-        <th>الاسم</th><th>الهاتف</th><th>المدينة</th><th>الطلبات</th><th>الإنفاق</th><th>التسجيل</th><th></th>
-      </tr></thead>
-      <tbody>${list.map(c => `
-        <tr>
-          <td><b>${esc(c.full_name || '—')}</b></td>
-          <td dir="ltr">${esc(c.phone || '—')}</td>
-          <td>${esc(c.city || '—')}</td>
-          <td>${c.total_orders || 0}</td>
-          <td><b>${fmt(c.total_spent)}</b></td>
-          <td><small class="muted">${dt(c.created_at)}</small></td>
-          <td>
-            ${c.phone ? `<a class="btn ghost sm" href="https://wa.me/${String(c.phone).replace(/\D/g,'')}" target="_blank" rel="noopener">💬</a>` : ''}
-          </td>
-        </tr>`).join('')}
-      </tbody>
-    </table>`;
-}
-
-$('#custSearch')?.addEventListener('input', () => renderCustomers());
 $('#addProductForm').addEventListener('submit', async e => {
   e.preventDefault();
   const err = $('#addErr'); err.hidden = true;
