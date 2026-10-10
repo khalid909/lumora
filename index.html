@@ -269,6 +269,7 @@ details[open] summary{margin-bottom:12px}
         <button type="button" data-lang="ar">ع</button><button type="button" data-lang="fr">FR</button><button type="button" data-lang="en">EN</button>
       </div>
       <button class="icon-btn" id="themeBtn" aria-label="Theme">🌓</button>
+      <a class="icon-btn" href="login.html" id="accountBtn" aria-label="حسابي" title="حسابي">👤</a>
       <button class="icon-btn" id="wishBtn" aria-label="Wishlist" aria-pressed="false">♡<span class="badge" id="wishCount" hidden>0</span></button>
       <button class="icon-btn" id="cartBtn" aria-label="Cart">🛒<span class="badge" id="cartCount" hidden>0</span></button>
     </div>
@@ -1194,7 +1195,23 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
     btn.href = 'login.html';
   }
 })();
-  
+  // تحديث زر الحساب
+(async () => {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const btn = document.getElementById('accountBtn');
+    if (!btn) return;
+    if (session) {
+      btn.href = 'account.html';
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('user_id', session.user.id)
+        .maybeSingle();
+      if (profile?.full_name) btn.title = `مرحبًا ${profile.full_name}`;
+    }
+  } catch(e) { console.error('account btn:', e); }
+})();
 </script>
 </body>
 </html>
