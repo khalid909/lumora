@@ -1330,6 +1330,29 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
     }
   } catch(e) { console.error('account btn:', e); }
 })();
+
+  /* ========== Newsletter ========== */
+document.getElementById('newsletterForm')?.addEventListener('submit', async e => {
+  e.preventDefault();
+  const email = e.target.querySelector('input[type=email]').value;
+  if (!email) return;
+  try {
+    await supabase.from('newsletter').insert([{ email }]);
+  } catch (err) { console.warn('newsletter:', err); }
+  toast('✓ تم اشتراكك! شكرًا لك 🎉');
+  e.target.reset();
+});
+
+/* ========== Back to top ========== */
+const btt = document.getElementById('backToTop');
+addEventListener('scroll', () => {
+  if (!btt) return;
+  btt.classList.toggle('on', window.scrollY > 400);
+}, { passive: true });
+btt?.addEventListener('click', () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+  
 </script>
 </body>
 </html>
