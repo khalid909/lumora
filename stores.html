@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>المتاجر — Lumora</title>
+<meta name="theme-color" content="#6d4aff">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .stores-wrap{max-width:1200px;margin:0 auto;padding:40px 20px}
+  .stores-wrap h1{text-align:center;margin-bottom:8px;font-size:2rem}
+  .stores-wrap > p{text-align:center;color:var(--muted);margin-bottom:32px}
+  .stores-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px}
+  .store-card{background:var(--surface);border:1px solid var(--line);border-radius:20px;overflow:hidden;transition:.3s;text-decoration:none;color:inherit;display:block}
+  .store-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:var(--p)}
+  .store-cover{height:120px;background:var(--grad);position:relative}
+  .store-logo{width:80px;height:80px;border-radius:20px;background:var(--surface);border:4px solid var(--surface);position:absolute;bottom:-40px;inset-inline-start:20px;display:grid;place-items:center;font-size:2rem;font-weight:800;color:var(--p);box-shadow:var(--shadow)}
+  .store-body{padding:50px 20px 20px}
+  .store-body h3{margin-bottom:4px;font-size:1.15rem}
+  .store-body .meta{color:var(--muted);font-size:.85rem;margin-bottom:12px}
+  .store-body .stats{display:flex;gap:16px;font-size:.85rem;color:var(--muted);padding-top:12px;border-top:1px solid var(--line)}
+  .store-body .stats b{color:var(--p);font-weight:800}
+</style>
+</head>
+<body>
+
+<header class="header" style="position:sticky;top:0;background:var(--surface);border-bottom:1px solid var(--line)">
+  <div class="wrap" style="display:flex;justify-content:space-between;align-items:center;padding:14px 0">
+    <a class="logo" href="./"><img src="icon.svg" width="28" height="28" alt=""><span class="brand2">Lumora</span></a>
+    <div style="display:flex;gap:8px">
+      <a href="become-vendor.html" class="btn ghost sm">افتح متجرك</a>
+      <a href="./" class="btn sm">← المتجر</a>
+    </div>
+  </div>
+</header>
+
+<div class="stores-wrap">
+  <h1>🏪 جميع المتاجر</h1>
+  <p>اكتشف أفضل المتاجر على المنصة</p>
+  <div class="stores-grid" id="storesGrid">
+    <p class="muted" style="grid-column:1/-1;text-align:center;padding:40px">جارٍ التحميل…</p>
+  </div>
+</div>
+
+<script>
+const sb = window.supabase.createClient(
+  'https://mpoqvpqeysgoqjtcwtfk.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1wb3F2cHFleXNnb3FqdGN3dGZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0ODE1NTUsImV4cCI6MjEwNzA1NzU1NX0.i0YEZkxAmy4wEnX0QP8Hm2erm1bxPFmO6sp78clevb0'
+);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+(async () => {
+  const { data, error } = await sb.from('vendors')
+    .select('*')
+    .eq('status', 'approved')
+    .order('total_sales', { ascending: false });
+
+  const grid = document.getElementById('storesGrid');
+
+  if (error || !data || !data.length) {
+    grid.innerHTML = '<p class="muted" style="grid-column:1/-1;text-align:center;padding:40px">لا توجد متاجر بعد. كن أول من يفتح متجرًا! <br><br><a href="become-vendor.html" class="btn">افتح متجرك الآن</a></p>';
+    return;
+  }
+
+  grid.innerHTML = data.map(v => `
+    <a class="store-card" href="store.html?slug=${encodeURIComponent(v.store_slug)}">
+      <div class="store-cover"></div>
+      <div class="store-logo">${esc(v.store_name.charAt(0))}</div>
+      <div class="store-body">
+        <h3>${esc(v.store_name)} ${v.verified ? '✓' : ''}</h3>
+        <p class="meta">${esc(v.store_description || 'متجر على Lumora').slice(0, 80)}</p>
+        <div class="stats">
+          <span>⭐ <b>${Number(v.rating || 0).toFixed(1)}</b></span>
+          <span>📦 <b>${v.total_products || 0}</b> منتج</span>
+          <span>🛒 <b>${v.total_orders || 0}</b> طلب</span>
+        </div>
+      </div>
+    </a>
+  `).join('');
+})();
+</script>
+</body>
+</html>
