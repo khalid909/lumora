@@ -1176,6 +1176,25 @@ function init() {
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
+
+// تحديث زر الحساب حسب حالة تسجيل الدخول
+(async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  const btn = document.getElementById('accountBtn');
+  if (!btn) return;
+  if (session) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('user_id', session.user.id)
+      .maybeSingle();
+    btn.title = profile?.full_name ? `مرحبًا ${profile.full_name}` : 'حسابي';
+    btn.href = 'account.html';
+  } else {
+    btn.href = 'login.html';
+  }
+})();
+  
 </script>
 </body>
 </html>
