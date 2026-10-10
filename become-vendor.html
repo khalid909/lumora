@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>افتح متجرك — Lumora</title>
+<meta name="theme-color" content="#6d4aff">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/admin.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  .hero-vendor{
+    text-align:center;padding:60px 20px 30px;
+    background:radial-gradient(circle at 50% 0%,rgba(109,74,255,.15),transparent 60%);
+  }
+  .hero-vendor h1{font-size:2.4rem;font-weight:800;margin-bottom:12px}
+  .hero-vendor h1 span{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero-vendor p{color:var(--muted);font-size:1.1rem;max-width:560px;margin:0 auto 20px}
+  .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;max-width:900px;margin:40px auto;padding:0 20px}
+  .feature{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;text-align:center}
+  .feature .ico{font-size:2rem;margin-bottom:8px}
+  .feature h3{font-size:1rem;margin-bottom:4px}
+  .feature p{color:var(--muted);font-size:.85rem}
+</style>
+</head>
+<body>
+
+<header class="dash-header" style="position:sticky;top:0">
+  <div class="dash-brand">
+    <img src="icon.svg" alt="" width="28" height="28">
+    <span>Lumora</span>
+  </div>
+  <div class="dash-actions">
+    <a href="./" class="btn ghost sm">← المتجر</a>
+    <a href="login.html" class="btn ghost sm">تسجيل الدخول</a>
+  </div>
+</header>
+
+<section class="hero-vendor">
+  <h1>افتح <span>متجرك الإلكتروني</span> في دقائق</h1>
+  <p>انضم لآلاف التجار على Lumora، وابدأ البيع عبر الإنترنت بدون تعقيد تقني.</p>
+</section>
+
+<section class="features">
+  <div class="feature"><div class="ico">🚀</div><h3>ابدأ في دقائق</h3><p>أنشئ متجرك فورًا بدون كود</p></div>
+  <div class="feature"><div class="ico">💰</div><h3>بدون رسوم شهرية</h3><p>عمولة فقط عند البيع</p></div>
+  <div class="feature"><div class="ico">📊</div><h3>لوحة تحكم كاملة</h3><p>أدر منتجاتك وطلباتك</p></div>
+  <div class="feature"><div class="ico">🚚</div><h3>توصيل لكل الولايات</h3><p>شبكة توصيل موثوقة</p></div>
+</section>
+
+<section style="max-width:620px;margin:0 auto 60px;padding:0 20px">
+  <div class="auth-card" style="max-width:100%">
+    <h2 style="margin-bottom:8px">أنشئ متجرك</h2>
+    <p class="auth-sub">سيتم مراجعة طلبك خلال 24 ساعة</p>
+
+    <form id="vendorForm" class="form-stack">
+      <label><span>الاسم الكامل *</span><input name="full_name" required></label>
+      <label><span>البريد الإلكتروني *</span><input type="email" name="email" required dir="ltr"></label>
+      <label><span>كلمة المرور * (6 أحرف على الأقل)</span><input type="password" name="password" required minlength="6" dir="ltr"></label>
+      <hr style="border:0;border-top:1px solid var(--line);margin:8px 0">
+      <label><span>اسم المتجر *</span><input name="store_name" required placeholder="مثال: متجر الأناقة"></label>
+      <label><span>رابط المتجر (Slug) *</span>
+        <input name="store_slug" required pattern="[a-z0-9-]+" placeholder="my-store" dir="ltr">
+        <small class="muted">أحرف إنجليزية صغيرة وأرقام وشرطات فقط</small>
+      </label>
+      <label><span>وصف المتجر</span><textarea name="store_description" rows="2"></textarea></label>
+      <div class="grid-2">
+        <label><span>الهاتف *</span><input name="phone" required dir="ltr" placeholder="+213..."></label>
+        <label><span>المدينة *</span><input name="city" required></label>
+      </div>
+      <label><span>واتساب (اختياري)</span><input name="whatsapp" dir="ltr" placeholder="+213..."></label>
+      <p class="err" id="vendorErr" hidden></p>
+      <button class="btn block" type="submit" id="vendorBtn">🚀 إنشاء المتجر</button>
+      <p class="auth-note" style="margin-top:10px">
+        بتسجيلك، أنت توافق على <a href="policies.html#terms" style="color:var(--p)">الشروط والأحكام</a>
+      </p>
+    </form>
+  </div>
+</section>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const sb = window.supabase.createClient(
+  'https://mpoqvpqeysgoqjtcwtfk.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1wb3F2cHFleXNnb3FqdGN3dGZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0ODE1NTUsImV4cCI6MjEwNzA1NzU1NX0.i0YEZkxAmy4wEnX0QP8Hm2erm1bxPFmO6sp78clevb0'
+);
+const $ = s => document.querySelector(s);
+let toastT;
+function toast(msg, kind=''){const e=$('#toast');e.textContent=msg;e.className='toast on '+kind;clearTimeout(toastT);toastT=setTimeout(()=>e.className='toast '+kind,3000)}
+
+$('#vendorForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = $('#vendorBtn'), err = $('#vendorErr');
+  err.hidden = true;
+  btn.disabled = true;
+  btn.textContent = 'جارٍ الإنشاء…';
+
+  const fd = Object.fromEntries(new FormData(e.target));
+
+  // 1. إنشاء حساب المستخدم
+  const { data: auth, error: e1 } = await sb.auth.signUp({
+    email: fd.email,
+    password: fd.password,
+    options: { data: { full_name: fd.full_name, phone: fd.phone, city: fd.city } }
+  });
+
+  if (e1) {
+    btn.disabled = false; btn.textContent = '🚀 إنشاء المتجر';
+    err.textContent = e1.message;
+    err.hidden = false;
+    return;
+  }
+
+  // 2. إنشاء المتجر
+  const { error: e2 } = await sb.from('vendors').insert([{
+    user_id: auth.user.id,
+    store_name: fd.store_name,
+    store_slug: fd.store_slug.toLowerCase(),
+    store_description: fd.store_description,
+    email: fd.email,
+    phone: fd.phone,
+    city: fd.city,
+    whatsapp: fd.whatsapp || fd.phone,
+    status: 'pending'
+  }]);
+
+  btn.disabled = false; btn.textContent = '🚀 إنشاء المتجر';
+
+  if (e2) {
+    err.textContent = e2.message.includes('duplicate')
+      ? 'رابط المتجر مستخدم بالفعل. جرّب اسمًا آخر.'
+      : e2.message;
+    err.hidden = false;
+    return;
+  }
+
+  toast('✓ تم استلام طلبك! سيتم المراجعة قريبًا', 'ok');
+  setTimeout(() => location.href = 'vendor.html', 2000);
+});
+</script>
+</body>
+</html>
