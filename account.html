@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>حسابي — Lumora</title>
+<meta name="theme-color" content="#6d4aff">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/admin.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  .account-wrap{max-width:900px;margin:0 auto;padding:24px 20px}
+  .account-header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:24px}
+  .account-header h1{font-size:1.5rem}
+  .account-card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;margin-bottom:16px}
+  .account-card h2{font-size:1.1rem;margin-bottom:14px}
+  .stat-mini{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}
+  .stat-mini div{background:var(--surface2);padding:14px;border-radius:12px;text-align:center}
+  .stat-mini b{display:block;font-size:1.4rem;margin-bottom:4px}
+  .stat-mini small{color:var(--muted)}
+  .order-item{background:var(--surface2);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .order-item .info{flex:1}
+  .order-item .info b{display:block;margin-bottom:4px}
+  .order-item .info small{color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div class="account-wrap">
+  <div class="account-header">
+    <h1>👤 حسابي</h1>
+    <div style="display:flex;gap:8px">
+      <a href="./" class="btn ghost sm">← المتجر</a>
+      <button class="btn danger sm" id="logoutBtn">خروج</button>
+    </div>
+  </div>
+
+  <div id="loading" class="muted" style="text-align:center;padding:40px">جارٍ التحميل…</div>
+
+  <div id="content" hidden>
+    <!-- بطاقة العميل -->
+    <div class="account-card">
+      <h2>معلوماتي</h2>
+      <div id="profileInfo"></div>
+      <button class="btn ghost sm" id="editBtn" style="margin-top:12px">✏️ تعديل</button>
+    </div>
+
+    <!-- نموذج التعديل -->
+    <form id="editForm" class="account-card form-stack" hidden>
+      <h2>تعديل المعلومات</h2>
+      <div class="grid-2">
+        <label><span>الاسم الكامل</span><input name="full_name"></label>
+        <label><span>الهاتف</span><input name="phone" dir="ltr"></label>
+      </div>
+      <div class="grid-2">
+        <label><span>المدينة</span><input name="city"></label>
+        <label><span>العنوان</span><input name="address"></label>
+      </div>
+      <p class="err" id="editErr" hidden></p>
+      <div style="display:flex;gap:8px">
+        <button class="btn" type="submit">💾 حفظ</button>
+        <button class="btn ghost" type="button" id="cancelEdit">إلغاء</button>
+      </div>
+    </form>
+
+    <!-- إحصائيات -->
+    <div class="account-card">
+      <h2>إحصائياتي</h2>
+      <div class="stat-mini">
+        <div><b id="ordCount">0</b><small>الطلبات</small></div>
+        <div><b id="ordTotal">0</b><small>الإجمالي المُنفَق</small></div>
+        <div><b id="ordPending">0</b><small>قيد الانتظار</small></div>
+      </div>
+    </div>
+
+    <!-- طلباتي -->
+    <div class="account-card">
+      <h2>📦 طلباتي</h2>
+      <div id="ordersList"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const SUPABASE_URL = 'https://mpoqvpqeysgoqjtcwtfk.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1wb3F2cHFleXNnb3FqdGN3dGZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0ODE1NTUsImV4cCI6MjEwNzA1NzU1NX0.i0YEZkxAmy4wEnX0QP8Hm2erm1bxPFmO6sp78clevb0';
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = n => new Intl.NumberFormat('ar-u-nu-latn', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(Number(n) || 0);
+const dt = s => s ? new Date(s).toLocaleString('ar-u-nu-latn', { dateStyle: 'short', timeStyle: 'short' }) : '—';
+
+let session = null;
+let profile = null;
+
+let toastT;
+function toast(msg, kind = '') {
+  const el = $('#toast'); el.textContent = msg; el.className = 'toast on ' + kind;
+  clearTimeout(toastT); toastT = setTimeout(() => el.className = 'toast ' + kind, 2400);
+}
+
+async function boot() {
+  const { data: { session: s } } = await sb.auth.getSession();
+  if (!s) { location.href = 'login.html'; return; }
+  session = s;
+
+  // جلب الملف الشخصي
+  const { data: p } = await sb.from('profiles').select('*').eq('user_id', s.user.id).maybeSingle();
+  profile = p || { user_id: s.user.id, full_name: '', phone: '', city: '', address: '' };
+
+  renderProfile();
+  await loadOrders();
+  $('#loading').hidden = true;
+  $('#content').hidden = false;
+}
+
+function renderProfile() {
+  $('#profileInfo').innerHTML = `
+    <div style="display:grid;gap:8px">
+      <div><b style="color:var(--muted)">الاسم:</b> ${esc(profile.full_name || '—')}</div>
+      <div><b style="color:var(--muted)">البريد:</b> ${esc(session.user.email)}</div>
+      <div><b style="color:var(--muted)">الهاتف:</b> <span dir="ltr">${esc(profile.phone || '—')}</span></div>
+      <div><b style="color:var(--muted)">المدينة:</b> ${esc(profile.city || '—')}</div>
+      <div><b style="color:var(--muted)">العنوان:</b> ${esc(profile.address || '—')}</div>
+      <div><b style="color:var(--muted)">تاريخ التسجيل:</b> ${dt(profile.created_at || session.user.created_at)}</div>
+    </div>`;
+
+  // تعبئة النموذج
+  ['full_name', 'phone', 'city', 'address'].forEach(k => {
+    const el = $(`#editForm [name=${k}]`);
+    if (el) el.value = profile[k] || '';
+  });
+}
+
+async function loadOrders() {
+  const { data, error } = await sb
+    .from('orders')
+    .select('*')
+    .eq('user_id', session.user.id)
+    .order('created_at', { ascending: false });
+
+  if (error) { console.error(error); return; }
+  const orders = data || [];
+
+  const total = orders.reduce((s, o) => s + (Number(o.total_amount) || 0), 0);
+  const pending = orders.filter(o => o.status === 'pending').length;
+
+  $('#ordCount').textContent = orders.length;
+  $('#ordTotal').textContent = fmt(total);
+  $('#ordPending').textContent = pending;
+
+  if (!orders.length) {
+    $('#ordersList').innerHTML = '<p class="muted" style="text-align:center;padding:20px">لا توجد طلبات بعد</p>';
+    return;
+  }
+
+  const statusLabel = s => ({
+    pending: 'قيد الانتظار', confirmed: 'مؤكد', shipped: 'تم الشحن',
+    delivered: 'تم التسليم', cancelled: 'ملغى'
+  }[s] || s);
+
+  $('#ordersList').innerHTML = orders.map(o => `
+    <div class="order-item">
+      <div class="info">
+        <b>#${esc(o.id)}</b>
+        <small>${dt(o.created_at)} • ${statusLabel(o.status)}</small>
+      </div>
+      <b>${fmt(o.total_amount)}</b>
+    </div>
+  `).join('');
+}
+
+// تعديل الملف
+$('#editBtn').addEventListener('click', () => {
+  $('#editForm').hidden = false;
+  $('#profileInfo').parentElement.style.display = 'none';
+});
+
+$('#cancelEdit').addEventListener('click', () => {
+  $('#editForm').hidden = true;
+  $('#profileInfo').parentElement.style.display = '';
+});
+
+$('#editForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const err = $('#editErr'); err.hidden = true;
+  const fd = Object.fromEntries(new FormData(e.target));
+
+  const { error } = await sb.from('profiles').upsert({
+    user_id: session.user.id,
+    full_name: fd.full_name,
+    phone: fd.phone,
+    city: fd.city,
+    address: fd.address
+  });
+
+  if (error) { err.textContent = error.message; err.hidden = false; return; }
+
+  // تحديث محلي
+  Object.assign(profile, fd);
+  renderProfile();
+
+  toast('✓ تم الحفظ', 'ok');
+  $('#editForm').hidden = true;
+  $('#profileInfo').parentElement.style.display = '';
+});
+
+$('#logoutBtn').addEventListener('click', async () => {
+  if (!confirm('تسجيل الخروج؟')) return;
+  await sb.auth.signOut();
+  location.href = './';
+});
+
+boot();
+</script>
+</body>
+</html>
