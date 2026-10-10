@@ -248,6 +248,34 @@ details[open] summary{margin-bottom:12px}
   .range input{width:110px}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}.reveal{opacity:1;translate:0 0}}
+/* ============ شريط دعوة التجار ============ */
+.vendor-cta-bar{
+  background:linear-gradient(90deg,#6d4aff 0%,#a64bff 50%,#ff6bb5 100%);
+  color:#fff;
+  font-size:.9rem;
+  font-weight:600;
+  padding:2px 0;
+  position:relative;
+  z-index:31;
+}
+.vendor-cta-bar .vendor-cta-link{
+  background:rgba(255,255,255,.18);
+  color:#fff;
+  padding:4px 12px;
+  border-radius:999px;
+  text-decoration:none;
+  font-weight:700;
+  transition:.2s;
+  border:1px solid rgba(255,255,255,.3);
+}
+.vendor-cta-bar .vendor-cta-link:hover{
+  background:rgba(255,255,255,.28);
+}
+@media(max-width:520px){
+  .vendor-cta-bar{font-size:.78rem;text-align:center}
+  .vendor-cta-bar span{display:none}
+}
+  
 </style>
 <script type="application/ld+json" id="ld">{}</script>
 </head>
