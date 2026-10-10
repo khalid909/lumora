@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>تسجيل الدخول — Lumora</title>
+<meta name="theme-color" content="#6d4aff">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/admin.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<section class="auth-screen" style="display:grid;min-height:100vh">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <img src="icon.svg" alt="" width="42" height="42">
+      <h1>Lumora</h1>
+    </div>
+    <p class="auth-sub">سجّل دخولك لمتابعة طلباتك</p>
+
+    <form id="loginForm" class="form-stack">
+      <label>
+        <span>البريد الإلكتروني</span>
+        <input type="email" name="email" required autocomplete="email" dir="ltr" placeholder="you@example.com">
+      </label>
+      <label>
+        <span>كلمة المرور</span>
+        <input type="password" name="password" required autocomplete="current-password" dir="ltr">
+      </label>
+      <p class="err" id="loginErr" hidden></p>
+      <button class="btn block" type="submit" id="loginBtn">
+        <span>تسجيل الدخول</span>
+      </button>
+    </form>
+
+    <p class="auth-note">
+      ليس لديك حساب؟ <a href="signup.html" style="color:var(--p);font-weight:700">أنشئ حسابًا</a>
+      <br><br>
+      <a href="./" style="color:var(--muted)">← رجوع للمتجر</a>
+    </p>
+  </div>
+</section>
+
+<script>
+const SUPABASE_URL = 'https://mpoqvpqeysgoqjtcwtfk.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1wb3F2cHFleXNnb3FqdGN3dGZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0ODE1NTUsImV4cCI6MjEwNzA1NzU1NX0.i0YEZkxAmy4wEnX0QP8Hm2erm1bxPFmO6sp78clevb0';
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const $ = s => document.querySelector(s);
+
+$('#loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = $('#loginBtn'), err = $('#loginErr');
+  err.hidden = true;
+  btn.disabled = true;
+  btn.innerHTML = '<span>جارٍ التحقق…</span>';
+
+  const fd = Object.fromEntries(new FormData(e.target));
+  const { data, error } = await sb.auth.signInWithPassword({
+    email: fd.email,
+    password: fd.password
+  });
+
+  btn.disabled = false;
+  btn.innerHTML = '<span>تسجيل الدخول</span>';
+
+  if (error) {
+    err.textContent = error.message === 'Invalid login credentials'
+      ? 'البريد أو كلمة المرور غير صحيحة'
+      : error.message;
+    err.hidden = false;
+    return;
+  }
+
+  // تحقق من الدور
+  const { data: profile } = await sb
+    .from('profiles')
+    .select('role')
+    .eq('user_id', data.user.id)
+    .maybeSingle();
+
+  const { data: admin } = await sb
+    .from('admins')
+    .select('role')
+    .eq('user_id', data.user.id)
+    .maybeSingle();
+
+  // التوجيه حسب الدور
+  if (admin) location.href = 'admin.html';
+  else location.href = 'account.html';
+});
+
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) location.href = 'account.html';
+})();
+</script>
+</body>
+</html>
