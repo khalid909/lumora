@@ -329,16 +329,134 @@ details[open] summary{margin-bottom:12px}
 </main>
 
 <footer class="footer">
-  <div class="wrap frow">
-    <div><div class="logo"><img src="icon.svg" alt="" width="28" height="28"><span class="brand2">Lumora</span></div>
-      <p data-i18n="footer_about"></p></div>
-    <div class="fbtns">
-      <button class="btn ghost sm" id="installBtn" hidden data-i18n="install"></button>
-      <a class="btn ghost sm" href="admin.html" data-i18n="admin"></a>
+  <!-- ✅ النشرة البريدية -->
+  <section class="newsletter-bar">
+    <div class="wrap newsletter-inner">
+      <div class="newsletter-text">
+        <h3>📬 اشترك في نشرتنا</h3>
+        <p>احصل على خصم 10% على أول طلب + عروض حصرية</p>
+      </div>
+      <form class="newsletter-form" id="newsletterForm">
+        <input type="email" placeholder="بريدك الإلكتروني" required dir="ltr" aria-label="البريد">
+        <button type="submit" class="btn">اشترك</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ✅ الفوتر الرئيسي -->
+  <div class="wrap footer-grid">
+    <!-- عمود 1: عن المنصة -->
+    <div class="footer-col footer-about">
+      <a class="logo" href="./" aria-label="Home">
+        <img src="icon.svg" alt="" width="34" height="34">
+        <span class="brand2">Lumora</span>
+      </a>
+      <p data-i18n="footer_about"></p>
+      <div class="footer-badges">
+        <span class="badge-ssl">🔒 دفع آمن SSL</span>
+        <span class="badge-ssl">✓ ضمان الجودة</span>
+      </div>
+    </div>
+
+    <!-- عمود 2: التسوق -->
+    <div class="footer-col">
+      <h4>التسوق</h4>
+      <ul>
+        <li><a href="#shop">كل المنتجات</a></li>
+        <li><a href="#shop" onclick="document.querySelector('[data-cat=tech]')?.click()">إلكترونيات</a></li>
+        <li><a href="#shop" onclick="document.querySelector('[data-cat=fashion]')?.click()">أزياء</a></li>
+        <li><a href="#shop" onclick="document.querySelector('[data-cat=home]')?.click()">المنزل</a></li>
+        <li><a href="#shop" onclick="document.querySelector('[data-cat=beauty]')?.click()">جمال</a></li>
+        <li><a href="#shop" onclick="document.querySelector('[data-cat=sport]')?.click()">رياضة</a></li>
+      </ul>
+    </div>
+
+    <!-- عمود 3: الخدمات -->
+    <div class="footer-col">
+      <h4>الخدمات</h4>
+      <ul>
+        <li><a href="policies.html#shipping">🚚 الشحن والتوصيل</a></li>
+        <li><a href="policies.html#returns">↩️ الإرجاع والاستبدال</a></li>
+        <li><a href="policies.html#warranty">🛡️ الضمان</a></li>
+        <li><a href="policies.html#payment">💳 طرق الدفع</a></li>
+        <li><a href="policies.html#faq">❓ الأسئلة الشائعة</a></li>
+        <li><a href="track.html">📍 تتبع طلبك</a></li>
+      </ul>
+    </div>
+
+    <!-- عمود 4: الدعم -->
+    <div class="footer-col">
+      <h4>الدعم</h4>
+      <ul>
+        <li><a href="about.html">ℹ️ من نحن</a></li>
+        <li><a href="contact.html">📧 اتصل بنا</a></li>
+        <li><a href="policies.html#privacy">🔐 سياسة الخصوصية</a></li>
+        <li><a href="policies.html#terms">📜 الشروط والأحكام</a></li>
+        <li><a href="policies.html#cookies">🍪 سياسة الكوكيز</a></li>
+        <li><a href="policies.html#refund">💰 سياسة الاسترداد</a></li>
+      </ul>
     </div>
   </div>
-  <div class="wrap copy">© <span id="year"></span> <span class="brand2">Lumora</span> — <span data-i18n="rights"></span></div>
+
+  <!-- ✅ وسائل التواصل + طرق الدفع -->
+  <div class="wrap footer-social-pay">
+    <div class="social-group">
+      <h5>تابعنا</h5>
+      <div class="social-icons">
+        <a href="https://instagram.com/yourstore" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2.2c3.2 0 3.6 0 4.9.1 1.2.1 1.8.3 2.2.4.6.2 1 .5 1.4.9.4.4.7.8.9 1.4.2.4.4 1 .4 2.2.1 1.3.1 1.7.1 4.9s0 3.6-.1 4.9c-.1 1.2-.3 1.8-.4 2.2-.2.6-.5 1-.9 1.4-.4.4-.8.7-1.4.9-.4.2-1 .4-2.2.4-1.3.1-1.7.1-4.9.1s-3.6 0-4.9-.1c-1.2-.1-1.8-.3-2.2-.4-.6-.2-1-.5-1.4-.9-.4-.4-.7-.8-.9-1.4-.2-.4-.4-1-.4-2.2C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.9c.1-1.2.3-1.8.4-2.2.2-.6.5-1 .9-1.4.4-.4.8-.7 1.4-.9.4-.2 1-.4 2.2-.4 1.3-.1 1.7-.1 4.9-.1zM12 0C8.7 0 8.3 0 7.1.1 5.8.1 4.9.3 4.1.6c-.8.3-1.5.8-2.2 1.4C1.3 2.7.8 3.4.5 4.2.3 5 .1 5.9.1 7.1 0 8.3 0 8.7 0 12s0 3.7.1 4.9c0 1.2.2 2.1.5 2.9.3.8.8 1.5 1.4 2.2.7.6 1.4 1.1 2.2 1.4.8.3 1.7.5 2.9.5 1.2.1 1.6.1 4.9.1s3.7 0 4.9-.1c1.2 0 2.1-.2 2.9-.5.8-.3 1.5-.8 2.2-1.4.6-.7 1.1-1.4 1.4-2.2.3-.8.5-1.7.5-2.9.1-1.2.1-1.6.1-4.9s0-3.7-.1-4.9c0-1.2-.2-2.1-.5-2.9-.3-.8-.8-1.5-1.4-2.2-.7-.6-1.4-1.1-2.2-1.4-.8-.3-1.7-.5-2.9-.5C15.7 0 15.3 0 12 0zm0 5.8c-3.4 0-6.2 2.8-6.2 6.2s2.8 6.2 6.2 6.2 6.2-2.8 6.2-6.2-2.8-6.2-6.2-6.2zm0 10.2c-2.2 0-4-1.8-4-4s1.8-4 4-4 4 1.8 4 4-1.8 4-4 4zm7.9-10.4c0 .8-.6 1.4-1.4 1.4-.8 0-1.4-.6-1.4-1.4 0-.8.6-1.4 1.4-1.4.8 0 1.4.6 1.4 1.4z"/></svg>
+        </a>
+        <a href="https://facebook.com/yourstore" target="_blank" rel="noopener" aria-label="Facebook" title="Facebook">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M24 12c0-6.6-5.4-12-12-12S0 5.4 0 12c0 6 4.4 11 10.1 11.9v-8.4H7v-3.5h3.1V9.4c0-3.1 1.8-4.8 4.7-4.8 1.4 0 2.8.2 2.8.2v3.1h-1.6c-1.5 0-2 .9-2 1.9v2.3h3.4l-.5 3.5h-2.8v8.4C19.6 23 24 18 24 12z"/></svg>
+        </a>
+        <a href="https://twitter.com/yourstore" target="_blank" rel="noopener" aria-label="Twitter" title="Twitter">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M18.2 2h3.3l-7.2 8.3L23 22h-6.7l-5.2-6.8L5.1 22H1.7l7.7-8.8L1 2h6.9l4.7 6.2L18.2 2zm-1.2 18h1.8L7 3.9H5L17 20z"/></svg>
+        </a>
+        <a href="https://wa.me/213550000000" target="_blank" rel="noopener" aria-label="WhatsApp" title="WhatsApp">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M17.5 14.4c-.3-.2-1.7-.8-2-.9-.3-.1-.5-.2-.7.2-.2.3-.8.9-.9 1.1-.2.2-.3.2-.6.1-.3-.2-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.2.2-.3.2-.5 0-.2 0-.4-.1-.5-.1-.2-.7-1.6-.9-2.2-.2-.5-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.7-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.2-.3-.2-.6-.3zM12 0C5.4 0 0 5.4 0 12c0 2.1.5 4.1 1.5 5.8L0 24l6.3-1.7c1.7.9 3.7 1.4 5.7 1.4 6.6 0 12-5.4 12-12S18.6 0 12 0zm0 22c-1.8 0-3.6-.5-5.1-1.4l-.4-.2-3.7 1 1-3.6-.2-.4C2.6 15.8 2 13.9 2 12 2 6.5 6.5 2 12 2s10 4.5 10 10-4.5 10-10 10z"/></svg>
+        </a>
+        <a href="https://youtube.com/@yourstore" target="_blank" rel="noopener" aria-label="YouTube" title="YouTube">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M23.5 6.2c-.3-1-1-1.8-2-2.1C19.6 3.5 12 3.5 12 3.5s-7.6 0-9.5.6c-1 .3-1.8 1.1-2 2.1C0 8.1 0 12 0 12s0 3.9.5 5.8c.3 1 1 1.8 2 2.1 1.9.6 9.5.6 9.5.6s7.6 0 9.5-.6c1-.3 1.8-1.1 2-2.1.5-1.9.5-5.8.5-5.8s0-3.9-.5-5.8zM9.5 15.5v-7l6.4 3.5-6.4 3.5z"/></svg>
+        </a>
+        <a href="https://tiktok.com/@yourstore" target="_blank" rel="noopener" aria-label="TikTok" title="TikTok">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M19.6 6.7c-1.4-.9-2.4-2.4-2.6-4.1v-.4h-3.4v14.4c0 1.9-1.5 3.4-3.4 3.4-1.9 0-3.4-1.5-3.4-3.4s1.5-3.4 3.4-3.4c.4 0 .7.1 1 .2V9.9c-.3 0-.7-.1-1-.1-3.7 0-6.7 3-6.7 6.7s3 6.7 6.7 6.7 6.7-3 6.7-6.7V9.1c1.3 1 3 1.6 4.8 1.7V7.3c-.6 0-1.2-.2-1.7-.5z"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <div class="pay-group">
+      <h5>طرق الدفع الآمنة</h5>
+      <div class="pay-icons">
+        <span class="pay-badge">💵 الدفع عند الاستلام</span>
+        <span class="pay-badge">💳 Visa</span>
+        <span class="pay-badge">💳 Mastercard</span>
+        <span class="pay-badge">🅿️ PayPal</span>
+        <span class="pay-badge">🍎 Apple Pay</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ الفوتر السفلي -->
+  <div class="footer-bottom">
+    <div class="wrap footer-bottom-inner">
+      <p class="copyright">
+        © <span id="year"></span> <span class="brand2">Lumora</span> — جميع الحقوق محفوظة
+      </p>
+      <div class="footer-meta">
+        <a href="policies.html#privacy">الخصوصية</a>
+        <span>·</span>
+        <a href="policies.html#terms">الشروط</a>
+        <span>·</span>
+        <a href="policies.html#cookies">الكوكيز</a>
+        <span>·</span>
+        <a href="sitemap.xml">Sitemap</a>
+      </div>
+    </div>
+  </div>
 </footer>
+
+<!-- ✅ زر العودة للأعلى -->
+<button id="backToTop" class="back-to-top" aria-label="العودة للأعلى" title="العودة للأعلى">↑</button>
 
 <!-- Cart drawer -->
 <div class="scrim" id="scrim"></div>
