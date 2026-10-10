@@ -1063,7 +1063,23 @@ function confetti() {
   (function tick() {
     x.clearRect(0, 0, c.width, c.height);
     ps.forEach(p => { p.vy += .35; p.x += p.vx; p.y += p.vy; p.r += p.vr; x.save(); x.translate(p.x, p.y); x.rotate(p.r); x.fillStyle = p.c; x.fillRect(-p.s / 2, -p.s / 2, p.s, p.s * .6); x.restore(); });
-    if (++f < 160) requestAnimationFrame(tick); else { x.clearRect(0, 0, c.width, c.height); c.style.display = 'none'; }
+    if (++f < 160) requestAnimationFrame(tick); else { x.clearRect(0, 0, c.width, c.height); c.style.display = 'none'; }   
+    /* ========== زر "افتح متجرك" ========== */
+(async () => {
+  try {
+    // إذا كان المستخدم تاجرًا مسجلاً → لا نعرض الزر
+    const { data: { session } } = await supabase.auth.getSession();
+    const btn = document.getElementById('vendorBtnHeader');
+    if (!btn) return;
+    
+    if (!session) {
+      btn.style.display = '';
+      btn.title = 'افتح متجرك على Lumora';
+    }
+  } catch(e) {
+    console.error('vendor button:', e);
+  }
+})();
   })();
 }
 
