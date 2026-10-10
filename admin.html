@@ -69,7 +69,8 @@
         <button class="side-link" data-panel="customers">👥 العملاء <span class="cnt" id="custCount">0</span></button>
         <button class="side-link on" data-panel="overview">📊 نظرة عامة</button>
         <button class="side-link" data-panel="products">📦 المنتجات <span class="cnt" id="prodCount">0</span></button>
-        <button class="side-link" data-panel="orders">🛒 الطلبات <span class="cnt" id="ordCount">0</span></button>
+       <button class="side-link" data-panel="orders">🛒 الطلبات <span class="cnt" id="ordCount">0</span></button>
+        <button class="side-link" data-panel="customers">👥 العملاء <span class="cnt" id="custCount">0</span></button>
         <button class="side-link" data-panel="add">➕ إضافة منتج</button>
         <button class="side-link" data-panel="settings">⚙️ الإعدادات</button>
       </nav>
@@ -142,7 +143,22 @@
           <p class="muted" style="padding:20px">جارٍ التحميل…</p>
         </div>
       </section>
-
+<!-- ===== العملاء ===== -->
+<section class="panel" data-panel="customers">
+  <div class="panel-head">
+    <h2>العملاء المسجلون</h2>
+    <input id="custSearch" type="search" placeholder="🔍 بحث…">
+  </div>
+  <div class="stats-grid" style="margin-bottom:20px">
+    <div class="stat"><small>إجمالي العملاء</small><b id="stCustomers">—</b></div>
+    <div class="stat"><small>هذا الأسبوع</small><b id="stCustWeek">—</b></div>
+    <div class="stat"><small>اليوم</small><b id="stCustToday">—</b></div>
+    <div class="stat"><small>متوسط الإنفاق</small><b id="stAvgSpent">—</b></div>
+  </div>
+  <div id="customersList" class="table-wrap">
+    <p class="muted" style="padding:20px">جارٍ التحميل…</p>
+  </div>
+</section>
       <!-- ===== إضافة منتج ===== -->
       <section class="panel" data-panel="add">
         <h2>إضافة منتج جديد</h2>
