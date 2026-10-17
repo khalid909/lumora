@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>لوحة التاجر — Lumora</title>
+<meta name="theme-color" content="#6d4aff">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/admin.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  .vendor-header{background:var(--surface);border-bottom:1px solid var(--line);padding:14px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+  .vendor-wrap{max-width:1100px;margin:0 auto;padding:24px 20px}
+  .welcome-banner{background:var(--grad);color:#fff;padding:24px;border-radius:16px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+  .welcome-banner h1{margin:0;font-size:1.5rem}
+  .welcome-banner p{margin:4px 0 0;opacity:.9}
+  .trial-box{background:rgba(0,0,0,.2);padding:12px 16px;border-radius:12px;text-align:center}
+  .trial-box b{display:block;font-size:1.4rem}
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}
+  .stat-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:8px}
+  .stat-card small{color:var(--muted);font-weight:600;font-size:.9rem}
+  .stat-card b{font-size:1.8rem;color:var(--text)}
+  .section-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:24px}
+  .section-card h2{font-size:1.2rem;margin-bottom:16px;border-bottom:1px solid var(--line);padding-bottom:10px;display:flex;justify-content:space-between}
+  .order-item{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+  .order-item:last-child{border-bottom:0}
+  .badge{background:var(--surface2);padding:4px 10px;border-radius:99px;font-size:.8rem}
+  .badge.pending{background:rgba(255,159,28,.15);color:var(--warn)}
+</style>
+</head>
+<body>
+
+<div class="vendor-header">
+  <div style="display:flex;align-items:center;gap:10px;font-weight:800">
+    <img src="icon.svg" width="28" height="28" alt=""> 
+    <span>لوحة التاجر</span>
+  </div>
+  <div style="display:flex;gap:10px">
+    <a href="./" class="btn ghost sm">← المتجر</a>
+    <button class="btn danger sm" id="logoutBtn">خروج</button>
+  </div>
+</div>
+
+<div class="vendor-wrap" id="mainContent" hidden>
+  <!-- ترحيب -->
+  <div class="welcome-banner">
+    <div>
+      <h1 id="storeName">اسم المتجر</h1>
+      <p>مرحباً بك في لوحة تحكم متجرك</p>
+    </div>
+    <div class="trial-box">
+      <small>حالة الاشتراك</small>
+      <b id="subStatus">تجربة مجانية</b>
+      <small id="trialTime">متبقي يومان</small>
+    </div>
+  </div>
+
+  <!-- إحصائيات -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <small>إجمالي المبيعات</small>
+      <b id="totalSales">0 DZD</b>
+    </div>
+    <div class="stat-card">
+      <small>الطلبات</small>
+      <b id="totalOrders">0</b>
+    </div>
+    <div class="stat-card">
+      <small>المنتجات</small>
+      <b id="totalProducts">0</b>
+    </div>
+  </div>
+
+  <!-- الطلبات -->
+  <div class="section-card">
+    <h2>📦 أحدث الطلبات</h2>
+    <div id="ordersList">
+      <p class="muted">لا توجد طلبات بعد</p>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const sb = window.supabase.createClient(
+  'https://mpoqvpqeysgoqjtcwtfk.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1wb3F2cHFleXNnb3FqdGN3dGZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0ODE1NTUsImV4cCI6MjEwNzA1NzU1NX0.i0YEZkxAmy4wEnX0QP8Hm2erm1bxPFmO6sp78clevb0'
+);
+const $ = s => document.querySelector(s);
+const fmt = n => new Intl.NumberFormat('ar-DZ', { style: 'currency', currency: 'DZD', minimumFractionDigits: 0 }).format(n || 0);
+
+async function init() {
+  // 1. تحقق من تسجيل الدخول
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) {
+    location.href = 'login.html';
+    return;
+  }
+
+  // 2. جلب بيانات المتجر
+  const { data: vendor, error } = await sb.from('vendors')
+    .select('*')
+    .eq('user_id', session.user.id)
+    .maybeSingle();
+
+  if (error || !vendor) {
+    alert('لم يتم العثور على متجر مرتبط بحسابك. تواصل مع الدعم.');
+    return;
+  }
+
+  // 3. عرض البيانات
+  $('#mainContent').hidden = false;
+  $('#storeName').textContent = vendor.store_name;
+  $('#totalSales').textContent = fmt(vendor.total_sales);
+  $('#totalOrders').textContent = vendor.total_orders || 0;
+  $('#totalProducts').textContent = vendor.total_products || 0;
+
+  // حالة الاشتراك
+  if (vendor.subscription_status === 'trial') {
+    const end = new Date(vendor.trial_ends_at);
+    const days = Math.max(0, Math.ceil((end - new Date()) / (1000 * 60 * 60 * 24)));
+    $('#subStatus').textContent = 'تجربة مجانية';
+    $('#trialTime').textContent = `متبقي ${days} يوم`;
+  } else if (vendor.subscription_status === 'active') {
+    $('#subStatus').textContent = 'نشط';
+    $('#trialTime').textContent = vendor.subscription_plan;
+  }
+
+  // جلب الطلبات
+  loadOrders(vendor.id);
+}
+
+async function loadOrders(vendorId) {
+  const { data, error } = await sb.from('orders')
+    .select('*')
+    .eq('vendor_id', vendorId)
+    .order('created_at', { ascending: false })
+    .limit(5);
+  
+  if (data && data.length) {
+    $('#ordersList').innerHTML = data.map(o => `
+      <div class="order-item">
+        <div>
+          <b>#${o.id}</b><br>
+          <small class="muted">${new Date(o.created_at).toLocaleDateString('ar')}</small>
+        </div>
+        <div>
+          <span class="badge pending">${o.status}</span>
+          <b>${fmt(o.total_amount)}</b>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+$('#logoutBtn').addEventListener('click', async () => {
+  await sb.auth.signOut();
+  location.href = './';
+});
+
+init();
+</script>
+</body>
+</html>
