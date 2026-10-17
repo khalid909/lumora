@@ -4,15 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>لوحة التاجر — Lumora</title>
-<meta name="theme-color" content="#6d4aff">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/admin.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   body { display: flex; min-height: 100vh; background: var(--bg); }
-  
-  /* القائمة الجانبية */
   .sidebar { width: 260px; background: var(--surface); border-inline-end: 1px solid var(--line); display: flex; flex-direction: column; position: fixed; top:0; bottom:0; right:0; z-index:10; }
   .sidebar-header { padding: 24px 20px; display: flex; align-items: center; gap: 10px; font-size: 1.2rem; font-weight: 800; border-bottom: 1px solid var(--line); }
   .sidebar-nav { padding: 20px 12px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
@@ -21,16 +18,15 @@
   .nav-item.active { background: var(--grad); color: #fff; box-shadow: 0 8px 16px -8px rgba(109,74,255,.4); }
   .sidebar-footer { padding: 20px; border-top: 1px solid var(--line); }
 
-  /* المحتوى الرئيسي */
   .main-content { flex: 1; margin-right: 260px; padding: 30px; overflow-y: auto; }
   .page-section { display: none; animation: fade 0.3s; }
   .page-section.active { display: block; }
   .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
   .top-bar h1 { font-size: 1.6rem; margin: 0; }
 
-  /* البطاقات */
   .welcome-banner { background: var(--grad); color: #fff; padding: 30px; border-radius: 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; box-shadow: 0 10px 24px -10px rgba(109,74,255,.5); }
-  .welcome-banner h2 { margin: 0 0 8px 0; font-size: 1.5rem; }
+  .welcome-banner h2 { margin: 0 0 8px 0; font-size: 1.5rem; display: flex; align-items: center; gap: 10px; }
+  .store-logo { width: 50px; height: 50px; background: #fff; color: var(--p); border-radius: 12px; display: grid; place-items: center; font-size: 1.5rem; font-weight: 800; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
   .welcome-banner p { margin: 0; opacity: 0.9; }
   .trial-badge { background: rgba(255,255,255,0.2); padding: 12px 24px; border-radius: 12px; text-align: center; border: 1px solid rgba(255,255,255,0.3); backdrop-filter: blur(10px); }
   .trial-badge b { display: block; font-size: 1.2rem; margin-bottom: 4px; }
@@ -44,15 +40,12 @@
   .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
   .card-header h3 { margin: 0; font-size: 1.1rem; }
   
-  /* جدول */
   .table-wrap { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; }
   th, td { padding: 14px; text-align: right; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
   th { color: var(--muted); font-weight: 700; background: var(--surface2); }
   tr:last-child td { border-bottom: 0; }
   .badge { padding: 6px 12px; border-radius: 99px; font-size: 0.75rem; font-weight: 700; }
-  .badge.pending { background: rgba(255,159,28,.15); color: var(--warn); }
-  .badge.completed { background: rgba(0,200,150,.15); color: var(--a); }
 
   @media(max-width: 900px) {
     .sidebar { transform: translateX(100%); transition: 0.3s; }
@@ -64,7 +57,6 @@
 </head>
 <body>
 
-<!-- القائمة الجانبية -->
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-header">
     <img src="icon.svg" width="30" height="30" alt="">
@@ -72,30 +64,32 @@
   </div>
   <nav class="sidebar-nav">
     <button class="nav-item active" data-target="home">📊 الرئيسية</button>
-    <button class="nav-item" data-target="orders">🛒 الطلبات <span class="badge pending" style="margin-right:auto" id="navOrdersCount">0</span></button>
+    <button class="nav-item" data-target="orders">🛒 الطلبات</button>
     <button class="nav-item" data-target="products">📦 المنتجات</button>
     <button class="nav-item" data-target="settings">⚙️ إعدادات المتجر</button>
   </nav>
   <div class="sidebar-footer">
-    <a href="./" class="btn ghost block sm" style="margin-bottom:8px">👁️ عرض المتجر</a>
     <button class="btn danger block sm" id="logoutBtn">خروج</button>
   </div>
 </aside>
 
-<!-- المحتوى الرئيسي -->
 <main class="main-content">
-  
-  <!-- شريط علوي -->
   <div class="top-bar">
     <h1 id="pageTitle">الرئيسية</h1>
-    <button class="btn ghost sm" onclick="document.getElementById('sidebar').classList.toggle('open')" style="display:none" id="menuBtn">☰</button>
+    <div style="display:flex; gap:10px;">
+      <a id="visitStoreBtn" href="#" target="_blank" class="btn sm">🔗 زيارة المتجر</a>
+      <button class="btn ghost sm" onclick="document.getElementById('sidebar').classList.toggle('open')" style="display:none" id="menuBtn">☰</button>
+    </div>
   </div>
 
   <!-- 1. الرئيسية -->
   <section class="page-section active" id="sec-home">
     <div class="welcome-banner">
       <div>
-        <h2 id="storeName">جاري التحميل...</h2>
+        <h2>
+          <div class="store-logo" id="storeLogo">H</div>
+          <span id="storeName">جاري التحميل...</span>
+        </h2>
         <p>مرحباً بك في لوحة تحكم متجرك</p>
       </div>
       <div class="trial-badge">
@@ -103,68 +97,57 @@
         <span style="font-size:0.8rem; opacity:0.8" id="trialTime">متبقي يومان</span>
       </div>
     </div>
-
     <div class="stats-grid">
-      <div class="stat-card">
-        <h3>إجمالي المبيعات</h3>
-        <div class="val" id="statSales">0 دج</div>
-      </div>
-      <div class="stat-card">
-        <h3>إجمالي الطلبات</h3>
-        <div class="val" id="statOrders">0</div>
-      </div>
-      <div class="stat-card">
-        <h3>المنتجات النشطة</h3>
-        <div class="val" id="statProducts">0</div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header">
-        <h3>📦 أحدث الطلبات</h3>
-      </div>
-      <div id="recentOrders">
-        <p class="muted" style="text-align:center; padding:20px;">لا توجد طلبات بعد</p>
-      </div>
+      <div class="stat-card"><h3>إجمالي المبيعات</h3><div class="val" id="statSales">0 دج</div></div>
+      <div class="stat-card"><h3>إجمالي الطلبات</h3><div class="val" id="statOrders">0</div></div>
+      <div class="stat-card"><h3>المنتجات النشطة</h3><div class="val" id="statProducts">0</div></div>
     </div>
   </section>
 
   <!-- 2. الطلبات -->
   <section class="page-section" id="sec-orders">
     <div class="card">
-      <div class="card-header">
-        <h3>جميع الطلبات</h3>
-      </div>
-      <div class="table-wrap" id="allOrdersList">
-        <p class="muted" style="text-align:center; padding:20px;">جاري تحميل الطلبات...</p>
-      </div>
+      <div class="card-header"><h3>جميع الطلبات</h3></div>
+      <div class="table-wrap" id="allOrdersList"><p class="muted" style="text-align:center; padding:20px;">جاري التحميل...</p></div>
     </div>
   </section>
 
   <!-- 3. المنتجات -->
   <section class="page-section" id="sec-products">
+    <div class="card" style="background:var(--surface2); border: 1px dashed var(--p);">
+      <h3 style="margin-top:0; margin-bottom:16px;">➕ إضافة منتج جديد</h3>
+      <form id="addProductForm" class="form-stack" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <label><span>اسم المنتج *</span><input type="text" name="name" required placeholder="مثال: قميص قطني"></label>
+        <label><span>السعر (دج) *</span><input type="number" name="price" required min="0" placeholder="2500"></label>
+        <label><span>المخزون *</span><input type="number" name="stock" required min="1" value="10"></label>
+        <label><span>الفئة</span>
+          <select name="cat">
+            <option value="fashion">أزياء</option>
+            <option value="tech">إلكترونيات</option>
+            <option value="home">المنزل</option>
+            <option value="beauty">جمال</option>
+            <option value="sport">رياضة</option>
+          </select>
+        </label>
+        <label style="grid-column:1/-1"><span>رابط الصورة (اختياري)</span><input type="url" name="img" placeholder="https://..."></label>
+        <button type="submit" class="btn" style="grid-column:1/-1">حفظ المنتج</button>
+        <p class="err" id="prodErr" hidden style="grid-column:1/-1"></p>
+      </form>
+    </div>
+
     <div class="card">
-      <div class="card-header">
-        <h3>منتجاتي</h3>
-      </div>
-      <div class="table-wrap" id="allProductsList">
-        <p class="muted" style="text-align:center; padding:20px;">جاري تحميل المنتجات...</p>
-      </div>
+      <div class="card-header"><h3>المنتجات المعروضة</h3></div>
+      <div class="table-wrap" id="allProductsList"><p class="muted" style="text-align:center; padding:20px;">جاري التحميل...</p></div>
     </div>
   </section>
 
   <!-- 4. الإعدادات -->
   <section class="page-section" id="sec-settings">
     <div class="card">
-      <div class="card-header">
-        <h3>بيانات المتجر</h3>
-      </div>
-      <div style="display:grid; gap:16px;" id="settingsForm">
-         <p class="muted">جاري التحميل...</p>
-      </div>
+      <div class="card-header"><h3>بيانات المتجر</h3></div>
+      <div style="display:grid; gap:16px;" id="settingsForm"></div>
     </div>
   </section>
-
 </main>
 
 <script>
@@ -178,28 +161,18 @@ const fmt = n => new Intl.NumberFormat('ar-DZ', { style: 'currency', currency: '
 
 let currentVendor = null;
 
-// التنقل بين الأقسام
+// التنقل
 $$('.nav-item').forEach(btn => {
   btn.addEventListener('click', () => {
-    // إزالة active من الكل
     $$('.nav-item').forEach(b => b.classList.remove('active'));
     $$('.page-section').forEach(s => s.classList.remove('active'));
-    
-    // إضافة active للزر والقسم المطلوب
     btn.classList.add('active');
-    const target = btn.dataset.target;
-    $(`#sec-${target}`).classList.add('active');
-    
-    // تحديث العنوان
-    $('#pageTitle').textContent = btn.textContent.replace(/[0-9]/g, '').trim();
-    
-    // إغلاق السايدبار في الجوال
+    $(`#sec-${btn.dataset.target}`).classList.add('active');
+    $('#pageTitle').textContent = btn.textContent.trim();
     if(window.innerWidth <= 900) $('#sidebar').classList.remove('open');
-
-    // تحميل البيانات عند الحاجة
-    if(target === 'orders') loadOrders();
-    if(target === 'products') loadProducts();
-    if(target === 'settings') loadSettings();
+    if(btn.dataset.target === 'products') loadProducts();
+    if(btn.dataset.target === 'orders') loadOrders();
+    if(btn.dataset.target === 'settings') loadSettings();
   });
 });
 
@@ -208,99 +181,101 @@ async function init() {
   if (!session) { location.href = 'vendor-login.html'; return; }
 
   const { data: vendor } = await sb.from('vendors').select('*').eq('user_id', session.user.id).maybeSingle();
-  if (!vendor) { alert('لا يوجد متجر مرتبط بحسابك'); return; }
+  if (!vendor) { alert('لا يوجد متجر'); return; }
 
   currentVendor = vendor;
   
-  // تعبئة البيانات الأساسية
+  // تعبئة البيانات
   $('#storeName').textContent = vendor.store_name;
+  $('#storeLogo').textContent = vendor.store_name.charAt(0).toUpperCase();
+  $('#visitStoreBtn').href = `store.html?slug=${vendor.store_slug}`; // ربط زر الزيارة
+  
   $('#statSales').textContent = fmt(vendor.total_sales);
   $('#statOrders').textContent = vendor.total_orders || 0;
-  $('#statProducts').textContent = vendor.total_products || 0;
-
+  
   if (vendor.subscription_status === 'trial') {
     const end = new Date(vendor.trial_ends_at);
     const days = Math.max(0, Math.ceil((end - new Date()) / (1000 * 60 * 60 * 24)));
     $('#trialTime').textContent = `متبقي ${days} يوم`;
-  } else if (vendor.subscription_status === 'active') {
-    $('#subStatus').textContent = 'اشتراك نشط';
-    $('#trialTime').textContent = vendor.subscription_plan;
-  }
-
-  loadRecentOrders();
-}
-
-async function loadRecentOrders() {
-  const { data } = await sb.from('orders').select('*').eq('vendor_id', currentVendor.id).order('created_at', { ascending: false }).limit(5);
-  const el = $('#recentOrders');
-  
-  if (!data || data.length === 0) {
-    el.innerHTML = '<p class="muted" style="text-align:center; padding:20px;">لا توجد طلبات حديثة</p>';
-    return;
   }
   
-  el.innerHTML = `<table><thead><tr><th>رقم الطلب</th><th>العميل</th><th>المبلغ</th><th>الحالة</th></tr></thead><tbody>
-    ${data.map(o => `<tr>
-      <td>#${o.id}</td>
-      <td>${o.customer_name || '—'}</td>
-      <td style="font-weight:bold">${fmt(o.total_amount)}</td>
-      <td><span class="badge ${o.status === 'pending' ? 'pending' : 'completed'}">${o.status}</span></td>
-    </tr>`).join('')}
-  </tbody></table>`;
-}
-
-async function loadOrders() {
-  const el = $('#allOrdersList');
-  el.innerHTML = '<p class="muted" style="text-align:center; padding:20px;">جاري التحميل...</p>';
-  
-  const { data, error } = await sb.from('orders').select('*').eq('vendor_id', currentVendor.id).order('created_at', { ascending: false });
-  
-  if (error || !data || data.length === 0) {
-    el.innerHTML = '<div style="text-align:center; padding:40px;"><div style="font-size:3rem; margin-bottom:10px;">📭</div><h3>لا توجد طلبات</h3><p class="muted">عندما يشتري العملاء من متجرك، ستظهر طلباتهم هنا.</p></div>';
-    return;
-  }
-
-  $('#navOrdersCount').textContent = data.filter(o => o.status === 'pending').length;
-
-  el.innerHTML = `<table><thead><tr><th>رقم الطلب</th><th>التاريخ</th><th>العميل</th><th>المدينة</th><th>المبلغ</th><th>الحالة</th></tr></thead><tbody>
-    ${data.map(o => `<tr>
-      <td><b>#${o.id}</b></td>
-      <td class="muted">${new Date(o.created_at).toLocaleDateString('ar')}</td>
-      <td>${o.customer_name || '—'}</td>
-      <td>${o.city || '—'}</td>
-      <td style="font-weight:bold; color:var(--p)">${fmt(o.total_amount)}</td>
-      <td><span class="badge ${o.status === 'pending' ? 'pending' : 'completed'}">${o.status}</span></td>
-    </tr>`).join('')}
-  </tbody></table>`;
+  loadProducts(); // تحميل المنتجات مبدئياً
 }
 
 async function loadProducts() {
   const el = $('#allProductsList');
-  const { data, error } = await sb.from('products').select('*').eq('vendor_id', currentVendor.id);
+  el.innerHTML = '<p class="muted" style="text-align:center; padding:20px;">جاري التحميل...</p>';
   
-  if (error || !data || data.length === 0) {
-    el.innerHTML = '<div style="text-align:center; padding:40px;"><div style="font-size:3rem; margin-bottom:10px;">📦</div><h3>لا توجد منتجات</h3><p class="muted">لم تقم بإضافة أي منتج بعد. (ميزة الإضافة ستتوفر قريباً)</p></div>';
+  const { data } = await sb.from('products').select('*').eq('vendor_id', currentVendor.id).order('created_at', { ascending: false });
+  
+  if (!data || data.length === 0) {
+    el.innerHTML = '<p class="muted" style="text-align:center; padding:20px;">لا توجد منتجات. أضف منتجك الأول!</p>';
     return;
   }
 
-  el.innerHTML = `<table><thead><tr><th>المنتج</th><th>السعر</th><th>المخزون</th></tr></thead><tbody>
+  $('#statProducts').textContent = data.length;
+
+  el.innerHTML = `<table><thead><tr><th>المنتج</th><th>الفئة</th><th>السعر</th><th>المخزون</th></tr></thead><tbody>
     ${data.map(p => `<tr>
-      <td><b>${p.name?.ar || p.name || 'منتج'}</b></td>
-      <td>${fmt(p.price)}</td>
-      <td>${p.stock} قطعة</td>
+      <td><div style="display:flex; align-items:center; gap:10px;">
+        ${p.img ? `<img src="${p.img}" style="width:40px; height:40px; border-radius:8px; object-fit:cover;">` : `<div style="width:40px; height:40px; background:var(--surface2); border-radius:8px; display:grid; place-items:center;">📦</div>`}
+        <b>${p.name?.ar || p.name || 'منتج'}</b>
+      </div></td>
+      <td>${p.cat}</td>
+      <td style="font-weight:bold">${fmt(p.price)}</td>
+      <td>${p.stock}</td>
     </tr>`).join('')}
   </tbody></table>`;
+}
+
+// إضافة منتج
+$('#addProductForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = e.target.querySelector('button[type=submit]');
+  const err = $('#prodErr');
+  err.hidden = true;
+  btn.disabled = true; btn.textContent = 'جارٍ الحفظ...';
+
+  const fd = Object.fromEntries(new FormData(e.target));
+  
+  // تجهيز البيانات
+  const newProduct = {
+    vendor_id: currentVendor.id,
+    store_slug: currentVendor.store_slug,
+    name: { ar: fd.name, fr: fd.name, en: fd.name }, // يمكن تعديلها لاحقاً لتدعم لغات متعددة
+    desc: { ar: 'منتج جديد', fr: '', en: '' },
+    price: Number(fd.price),
+    stock: Number(fd.stock),
+    cat: fd.cat || 'tech',
+    img: fd.img || '',
+    emoji: '🛍️'
+  };
+
+  const { error } = await sb.from('products').insert([newProduct]);
+  
+  btn.disabled = false; btn.textContent = 'حفظ المنتج';
+
+  if (error) {
+    err.textContent = error.message; err.hidden = false;
+    return;
+  }
+
+  e.target.reset();
+  loadProducts();
+});
+
+function loadOrders() {
+  const el = $('#allOrdersList');
+  el.innerHTML = '<div style="text-align:center; padding:40px;"><div style="font-size:3rem; margin-bottom:10px;">📭</div><h3>لا توجد طلبات</h3><p class="muted">عندما يشتري العملاء من متجرك، ستظهر طلباتهم هنا.</p></div>';
 }
 
 function loadSettings() {
   const el = $('#settingsForm');
   el.innerHTML = `
     <div style="display:grid; gap:12px; max-width:500px;">
-      <label><span style="font-size:0.9rem; font-weight:bold; color:var(--muted);">اسم المتجر</span><br><b>${currentVendor.store_name}</b></label>
-      <label><span style="font-size:0.9rem; font-weight:bold; color:var(--muted);">رابط المتجر (Slug)</span><br><code style="background:var(--surface2); padding:4px 8px; border-radius:6px;">${currentVendor.store_slug}</code></label>
-      <label><span style="font-size:0.9rem; font-weight:bold; color:var(--muted);">البريد الإلكتروني</span><br><b>${currentVendor.email}</b></label>
-      <label><span style="font-size:0.9rem; font-weight:bold; color:var(--muted);">الهاتف</span><br><b dir="ltr">${currentVendor.phone || '—'}</b></label>
-      <label><span style="font-size:0.9rem; font-weight:bold; color:var(--muted);">حالة الاشتراك</span><br><span class="badge pending">${currentVendor.subscription_status}</span></label>
+      <label><span style="font-weight:bold; color:var(--muted);">اسم المتجر</span><br><b>${currentVendor.store_name}</b></label>
+      <label><span style="font-weight:bold; color:var(--muted);">رابط المتجر (Slug)</span><br><a href="store.html?slug=${currentVendor.store_slug}" target="_blank" style="color:var(--p); text-decoration:none;">store.html?slug=${currentVendor.store_slug}</a></label>
+      <label><span style="font-weight:bold; color:var(--muted);">البريد الإلكتروني</span><br><b>${currentVendor.email}</b></label>
     </div>
   `;
 }
@@ -310,9 +285,7 @@ $('#logoutBtn').addEventListener('click', async () => {
   location.href = './';
 });
 
-// تفعيل زر القائمة في الجوال
 if(window.innerWidth <= 900) $('#menuBtn').style.display = 'block';
-
 init();
 </script>
 </body>
