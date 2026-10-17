@@ -243,7 +243,7 @@ $('#addProductForm').addEventListener('submit', async (e) => {
     vendor_id: currentVendor.id,
     store_slug: currentVendor.store_slug,
     name: { ar: fd.name, fr: fd.name, en: fd.name }, // يمكن تعديلها لاحقاً لتدعم لغات متعددة
-    desc: { ar: 'منتج جديد', fr: '', en: '' },
+   description: { ar: 'منتج جديد', fr: '', en: '' },
     price: Number(fd.price),
     stock: Number(fd.stock),
     cat: fd.cat || 'tech',
