@@ -1,168 +1,242 @@
-<!doctype html>
-<html lang="ar" dir="rtl" data-theme="light">
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>لوحة التاجر — Lumora</title>
-<meta name="theme-color" content="#6d4aff">
-<link rel="icon" href="icon.svg" type="image/svg+xml">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/admin.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-  .vendor-header{background:var(--surface);border-bottom:1px solid var(--line);padding:14px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
-  .vendor-wrap{max-width:1100px;margin:0 auto;padding:24px 20px}
-  .welcome-banner{background:var(--grad);color:#fff;padding:24px;border-radius:16px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
-  .welcome-banner h1{margin:0;font-size:1.5rem}
-  .welcome-banner p{margin:4px 0 0;opacity:.9}
-  .trial-box{background:rgba(0,0,0,.2);padding:12px 16px;border-radius:12px;text-align:center}
-  .trial-box b{display:block;font-size:1.4rem}
-  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}
-  .stat-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:8px}
-  .stat-card small{color:var(--muted);font-weight:600;font-size:.9rem}
-  .stat-card b{font-size:1.8rem;color:var(--text)}
-  .section-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:24px}
-  .section-card h2{font-size:1.2rem;margin-bottom:16px;border-bottom:1px solid var(--line);padding-bottom:10px;display:flex;justify-content:space-between}
-  .order-item{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
-  .order-item:last-child{border-bottom:0}
-  .badge{background:var(--surface2);padding:4px 10px;border-radius:99px;font-size:.8rem}
-  .badge.pending{background:rgba(255,159,28,.15);color:var(--warn)}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التاجر - Hwayeg</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Supabase JS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary: #8b5cf6;
+            --primary-gradient: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
+            --bg-light: #f8fafc;
+            --card-bg: #ffffff;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+        body { background-color: var(--bg-light); color: var(--text-dark); display: flex; min-height: 100vh; }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: #fff;
+            border-left: 1px solid var(--border-color);
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .sidebar-brand { font-size: 1.4rem; font-weight: bold; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+        .nav-links { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+        .nav-item button {
+            width: 100%;
+            text-align: right;
+            padding: 12px 14px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            transition: all 0.2s;
+        }
+        .nav-item button.active, .nav-item button:hover {
+            background: #f3f0ff;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        .main-content { flex: 1; padding: 24px 32px; overflow-y: auto; }
+
+        /* Header Bar */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .btn-logout {
+            background-color: #fee2e2;
+            color: #ef4444;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* Banner */
+        .vendor-banner {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 24px;
+            border-radius: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .subscription-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 16px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+        .stat-title { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; }
+        .stat-value { font-size: 1.6rem; font-weight: bold; color: var(--text-dark); }
+
+        /* Panels Container */
+        .panel-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .btn-action {
+            background: var(--primary);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* Order/Product Item Rows */
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .data-row:last-child { border-bottom: none; }
+        .status-pill {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+        .status-pending { background: #fef3c7; color: #b45309; }
+        .status-delivered { background: #dcfce7; color: #15803d; }
+    </style>
 </head>
 <body>
 
-<div class="vendor-header">
-  <div style="display:flex;align-items:center;gap:10px;font-weight:800">
-    <img src="icon.svg" width="28" height="28" alt=""> 
-    <span>لوحة التاجر</span>
-  </div>
-  <div style="display:flex;gap:10px">
-    <a href="./" class="btn ghost sm">← المتجر</a>
-    <button class="btn danger sm" id="logoutBtn">خروج</button>
-  </div>
-</div>
-
-<div class="vendor-wrap" id="mainContent" hidden>
-  <!-- ترحيب -->
-  <div class="welcome-banner">
-    <div>
-      <h1 id="storeName">اسم المتجر</h1>
-      <p>مرحباً بك في لوحة تحكم متجرك</p>
-    </div>
-    <div class="trial-box">
-      <small>حالة الاشتراك</small>
-      <b id="subStatus">تجربة مجانية</b>
-      <small id="trialTime">متبقي يومان</small>
-    </div>
-  </div>
-
-  <!-- إحصائيات -->
-  <div class="stats-grid">
-    <div class="stat-card">
-      <small>إجمالي المبيعات</small>
-      <b id="totalSales">0 DZD</b>
-    </div>
-    <div class="stat-card">
-      <small>الطلبات</small>
-      <b id="totalOrders">0</b>
-    </div>
-    <div class="stat-card">
-      <small>المنتجات</small>
-      <b id="totalProducts">0</b>
-    </div>
-  </div>
-
-  <!-- الطلبات -->
-  <div class="section-card">
-    <h2>📦 أحدث الطلبات</h2>
-    <div id="ordersList">
-      <p class="muted">لا توجد طلبات بعد</p>
-    </div>
-  </div>
-</div>
-
-<div class="toast" id="toast" role="status"></div>
-
-<script>
-const sb = window.supabase.createClient(
-  'https://mpoqvpqeysgoqjtcwtfk.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1wb3F2cHFleXNnb3FqdGN3dGZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0ODE1NTUsImV4cCI6MjEwNzA1NzU1NX0.i0YEZkxAmy4wEnX0QP8Hm2erm1bxPFmO6sp78clevb0'
-);
-const $ = s => document.querySelector(s);
-const fmt = n => new Intl.NumberFormat('ar-DZ', { style: 'currency', currency: 'DZD', minimumFractionDigits: 0 }).format(n || 0);
-
-async function init() {
-  // 1. تحقق من تسجيل الدخول
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) {
-    location.href = 'login.html';
-    return;
-  }
-
-  // 2. جلب بيانات المتجر
-  const { data: vendor, error } = await sb.from('vendors')
-    .select('*')
-    .eq('user_id', session.user.id)
-    .maybeSingle();
-
-  if (error || !vendor) {
-    alert('لم يتم العثور على متجر مرتبط بحسابك. تواصل مع الدعم.');
-    return;
-  }
-
-  // 3. عرض البيانات
-  $('#mainContent').hidden = false;
-  $('#storeName').textContent = vendor.store_name;
-  $('#totalSales').textContent = fmt(vendor.total_sales);
-  $('#totalOrders').textContent = vendor.total_orders || 0;
-  $('#totalProducts').textContent = vendor.total_products || 0;
-
-  // حالة الاشتراك
-  if (vendor.subscription_status === 'trial') {
-    const end = new Date(vendor.trial_ends_at);
-    const days = Math.max(0, Math.ceil((end - new Date()) / (1000 * 60 * 60 * 24)));
-    $('#subStatus').textContent = 'تجربة مجانية';
-    $('#trialTime').textContent = `متبقي ${days} يوم`;
-  } else if (vendor.subscription_status === 'active') {
-    $('#subStatus').textContent = 'نشط';
-    $('#trialTime').textContent = vendor.subscription_plan;
-  }
-
-  // جلب الطلبات
-  loadOrders(vendor.id);
-}
-
-async function loadOrders(vendorId) {
-  const { data, error } = await sb.from('orders')
-    .select('*')
-    .eq('vendor_id', vendorId)
-    .order('created_at', { ascending: false })
-    .limit(5);
-  
-  if (data && data.length) {
-    $('#ordersList').innerHTML = data.map(o => `
-      <div class="order-item">
-        <div>
-          <b>#${o.id}</b><br>
-          <small class="muted">${new Date(o.created_at).toLocaleDateString('ar')}</small>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <span>✨ لوحة التاجر</span>
         </div>
-        <div>
-          <span class="badge pending">${o.status}</span>
-          <b>${fmt(o.total_amount)}</b>
+        <ul class="nav-links">
+            <li class="nav-item"><button class="active" onclick="switchSection('dashboard')">📊 الرئيسية</button></li>
+            <li class="nav-item"><button onclick="switchSection('orders')">📦 الطلبات</button></li>
+            <li class="nav-item"><button onclick="switchSection('products')">🏷️ المنتجات</button></li>
+            <li class="nav-item"><button onclick="switchSection('settings')">⚙️ إعدادات المتجر</button></li>
+        </ul>
+    </aside>
+
+    <!-- Content Area -->
+    <main class="main-content">
+        <div class="top-bar">
+            <a href="stores.html" class="btn-action" style="background:#e2e8f0; color:#334155; text-decoration:none;">عرض المتجر ↗</a>
+            <button class="btn-logout" id="logoutBtn">خروج</button>
         </div>
-      </div>
-    `).join('');
-  }
-}
 
-$('#logoutBtn').addEventListener('click', async () => {
-  await sb.auth.signOut();
-  location.href = './';
-});
+        <!-- Banner -->
+        <div class="vendor-banner">
+            <div>
+                <h2 id="storeTitle">متجر ...</h2>
+                <p>مرحباً بك في لوحة تحكم وإدارة مبيعاتك</p>
+            </div>
+            <div class="subscription-badge">
+                <span style="font-size:0.75rem; display:block;">حالة الاشتراك</span>
+                <strong id="subBadge">تجربة مجانية</strong>
+            </div>
+        </div>
 
-init();
-</script>
+        <!-- Dashboard Section -->
+        <div id="section-dashboard">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-title">إجمالي المبيعات</div>
+                    <div class="stat-value" id="totalSales">0 د.ج</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">إجمالي الطلبات</div>
+                    <div class="stat-value" id="totalOrders">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">المنتجات النشطة</div>
+                    <div class="stat-value" id="activeProducts">0</div>
+                </div>
+            </div>
+
+            <div class="panel-card">
+                <div class="panel-header">
+                    <h3>📦 أحدث الطلبات</h3>
+                    <button class="btn-action" onclick="switchSection('orders')">عرض الكل</button>
+                </div>
+                <div id="latestOrdersList">
+                    <p style="color:var(--text-muted); text-align:center; padding: 20px;">جارٍ تحميل الطلبات...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products Section -->
+        <div id="section-products" style="display: none;">
+            <div class="panel-card">
+                <div class="panel-header">
+                    <h3>🏷️ إدارة المنتجات</h3>
+                    <button class="btn-action" onclick="openAddProductModal()">+ إضافة منتج جديد</button>
+                </div>
+                <div id="productsList">
+                    <!-- Dynamic Product List -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Orders Section -->
+        <div id="section-orders" style="display: none;">
+            <div class="panel-card">
+                <div class="panel-header">
+                    <h3>📦 جميع الطلبات</h3>
+                </div>
+                <div id="allOrdersList">
+                    <!-- Dynamic Orders List -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/vendor.js"></script>
 </body>
 </html>
