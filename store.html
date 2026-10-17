@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>المتجر — Lumora</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  .store-header { background: var(--surface); border-bottom: 1px solid var(--line); padding: 40px 20px; text-align: center; }
+  .store-logo { width: 90px; height: 90px; background: var(--grad); color: #fff; border-radius: 24px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 800; margin: 0 auto 16px; box-shadow: 0 10px 24px -10px rgba(109,74,255,.5); }
+  .store-header h1 { font-size: 2rem; margin-bottom: 8px; }
+  .store-header p { color: var(--muted); max-width: 600px; margin: 0 auto; }
+  
+  /* إعادة استخدام شبكة المنتجات من المنصة */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(235px,1fr)); gap: 18px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; transition: .25s; }
+  .card:hover { box-shadow: var(--shadow); border-color: var(--p); }
+  .thumb { position: relative; aspect-ratio: 1; background: var(--surface2); }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .card .body { padding: 14px; }
+  .card h3 { font-size: 1rem; line-height: 1.35; margin-bottom: 4px; min-height: 2.7em; }
+  .price b { font-size: 1.1rem; color: var(--p); }
+</style>
+</head>
+<body>
+
+<!-- شريط علوي بسيط -->
+<div class="topbar" style="background:var(--surface); border-bottom:1px solid var(--line); color:var(--text); padding:12px;">
+  <div class="wrap" style="display:flex; justify-content:space-between; align-items:center;">
+    <a href="index.html" class="logo" style="font-weight:800; text-decoration:none; color:inherit; display:flex; align-items:center; gap:8px;">
+      <img src="icon.svg" width="24" height="24" alt=""> Lumora
+    </a>
+    <a href="index.html" class="btn sm ghost">← العودة للمنصة</a>
+  </div>
+</div>
+
+<header class="store-header">
+  <div class="store-logo" id="storeLogo">S</div>
+  <h1 id="storeName">جاري التحميل...</h1>
+  <p id="storeDesc">مرحباً بك في متجرنا</p>
+</header>
+
+<main class="wrap" style="padding: 40px 0;">
+  <h2 style="margin-bottom: 20px; font-size: 1.4rem;">منتجات المتجر</h2>
+  <div class="grid" id="productsGrid">
+    <p class="muted" style="grid-column:1/-1; text-align:center;">جاري تحميل المنتجات...</p>
+  </div>
+</main>
+
+<script>
+const sb = window.supabase.createClient(
+  'https://mpoqvpqeysgoqjtcwtfk.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1wb3F2cHFleXNnb3FqdGN3dGZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0ODE1NTUsImV4cCI6MjEwNzA1NzU1NX0.i0YEZkxAmy4wEnX0QP8Hm2erm1bxPFmO6sp78clevb0'
+);
+const fmt = n => new Intl.NumberFormat('ar-DZ', { style: 'currency', currency: 'DZD', minimumFractionDigits: 0 }).format(n || 0);
+
+async function loadStore() {
+  // الحصول على الـ slug من الرابط (store.html?slug=my-store)
+  const params = new URLSearchParams(window.location.search);
+  const slug = params.get('slug');
+
+  if (!slug) {
+    document.getElementById('storeName').textContent = 'خطأ: رابط المتجر غير صالح';
+    return;
+  }
+
+  // 1. جلب بيانات المتجر
+  const { data: vendor, error: vErr } = await sb.from('vendors').select('*').eq('store_slug', slug).maybeSingle();
+  
+  if (vErr || !vendor) {
+    document.getElementById('storeName').textContent = 'المتجر غير موجود';
+    return;
+  }
+
+  // عرض بيانات المتجر
+  document.title = vendor.store_name + ' — Lumora';
+  document.getElementById('storeName').textContent = vendor.store_name;
+  document.getElementById('storeLogo').textContent = vendor.store_name.charAt(0).toUpperCase();
+  if(vendor.store_description) document.getElementById('storeDesc').textContent = vendor.store_description;
+
+  // 2. جلب منتجات هذا المتجر
+  const { data: products, error: pErr } = await sb.from('products').select('*').eq('vendor_id', vendor.id);
+  const grid = document.getElementById('productsGrid');
+
+  if (pErr || !products || products.length === 0) {
+    grid.innerHTML = '<p class="muted" style="grid-column:1/-1; text-align:center; padding:40px;">هذا المتجر لم يقم بإضافة أي منتجات بعد.</p>';
+    return;
+  }
+
+  // 3. عرض المنتجات
+  grid.innerHTML = products.map(p => `
+    <article class="card">
+      <div class="thumb">
+        ${p.img ? `<img src="${p.img}" alt="${p.name?.ar || 'منتج'}">` : `<div style="width:100%; height:100%; display:grid; place-items:center; font-size:3rem; background:var(--surface2);">📦</div>`}
+      </div>
+      <div class="body">
+        <h3>${p.name?.ar || 'منتج'}</h3>
+        <div class="price">
+          <b>${fmt(p.price)}</b>
+        </div>
+        <button class="btn sm block" style="margin-top:10px;">أضف للسلة</button>
+      </div>
+    </article>
+  `).join('');
+}
+
+loadStore();
+</script>
+</body>
+</html>
