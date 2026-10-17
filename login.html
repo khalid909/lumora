@@ -3,167 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تسجيل دخول البائع - Hwayeg</title>
-    <!-- مكتبة Supabase -->
+    <title>تسجيل دخول الزبون - Hwayeg</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root {
-            --primary: #8b5cf6;
-            --primary-hover: #7c3aed;
-            --bg-color: #f8fafc;
-            --card-bg: #ffffff;
-            --text-dark: #1e293b;
-            --text-muted: #64748b;
-            --border-color: #e2e8f0;
-            --error-color: #ef4444;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-dark);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .login-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 36px 30px;
-            width: 100%;
-            max-width: 420px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-        }
-
-        .login-header {
-            text-align: center;
-            margin-bottom: 24px;
-        }
-
-        .login-header h1 {
-            font-size: 1.6rem;
-            color: var(--text-dark);
-            margin-bottom: 8px;
-        }
-
-        .login-header p {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-        }
-
-        .form-group {
-            margin-bottom: 18px;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 0.88rem;
-            font-weight: 600;
-            margin-bottom: 6px;
-            color: var(--text-dark);
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 12px 14px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            font-size: 0.95rem;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        .form-control:focus {
-            border-color: var(--primary);
-        }
-
-        .btn-submit {
-            width: 100%;
-            padding: 12px;
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.2s;
-            margin-top: 10px;
-        }
-
-        .btn-submit:hover {
-            background-color: var(--primary-hover);
-        }
-
-        .btn-submit:disabled {
-            background-color: #cbd5e1;
-            cursor: not-allowed;
-        }
-
-        .error-message {
-            background-color: #fef2f2;
-            color: var(--error-color);
-            padding: 10px;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            margin-bottom: 16px;
-            display: none;
-            border: 1px solid #fecaca;
-        }
-
-        .extra-links {
-            margin-top: 20px;
-            text-align: center;
-            font-size: 0.85rem;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .extra-links a {
-            color: var(--primary);
-            text-decoration: none;
-        }
-
-        .extra-links a:hover {
-            text-decoration: underline;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; }
+        body { background: #f8fafc; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 32px; width: 100%; max-width: 400px; }
+        h1 { font-size: 1.4rem; margin-bottom: 6px; color: #0f172a; text-align: center; }
+        p.sub { font-size: 0.85rem; color: #64748b; margin-bottom: 20px; text-align: center; }
+        .form-group { margin-bottom: 16px; }
+        label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; }
+        input { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; }
+        input:focus { border-color: #3b82f6; }
+        .btn { width: 100%; padding: 11px; background: #2563eb; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 8px; }
+        .btn:hover { background: #1d4ed8; }
+        .alert { background: #fee2e2; color: #dc2626; padding: 9px; border-radius: 7px; font-size: 0.85rem; margin-bottom: 14px; display: none; }
+        .links { text-align: center; margin-top: 18px; font-size: 0.85rem; color: #64748b; }
+        .links a { color: #2563eb; text-decoration: none; }
+        .vendor-switch { margin-top: 15px; padding-top: 15px; border-top: 1px solid #e2e8f0; text-align: center; font-size: 0.85rem; }
     </style>
 </head>
 <body>
+    <div class="card">
+        <h1>تسجيل الدخول</h1>
+        <p class="sub">مرحباً بك مجدداً في متجر Hwayeg</p>
 
-    <div class="login-card">
-        <div class="login-header">
-            <h1>تسجيل دخول التاجر</h1>
-            <p>أدخل بيانات حسابك للوصول إلى لوحة التحكم</p>
-        </div>
+        <div id="userError" class="alert"></div>
 
-        <div id="errorAlert" class="error-message"></div>
-
-        <form id="vendorLoginForm">
+        <form id="customerLoginForm">
             <div class="form-group">
-                <label for="email">البريد الإلكتروني</label>
-                <input type="email" id="email" class="form-control" placeholder="name@store.com" required>
+                <label>البريد الإلكتروني</label>
+                <input type="email" id="customerEmail" placeholder="yourname@gmail.com" required>
             </div>
-
             <div class="form-group">
-                <label for="password">كلمة المرور</label>
-                <input type="password" id="password" class="form-control" placeholder="••••••••" required>
+                <label>كلمة المرور</label>
+                <input type="password" id="customerPassword" placeholder="••••••••" required>
             </div>
-
-            <button type="submit" id="submitBtn" class="btn-submit">دخول</button>
+            <button type="submit" id="custBtn" class="btn">دخول</button>
         </form>
 
-        <div class="extra-links">
-            <a href="forgot-password.html">نسيت كلمة المرور؟</a>
-            <span>ليس لديك حساب تاجر؟ <a href="become-vendor.html">سجّل الآن</a></span>
+        <div class="links">
+            <a href="Forgot password">نسيت كلمة المرور؟</a> | <a href="signup.html">إنشاء حساب جديد</a>
+        </div>
+
+        <div class="vendor-switch">
+            هل أنت تاجر؟ <a href="vendor-login.html" style="font-weight: bold; color: #7c3aed;">دخول التجار من هنا ↗</a>
         </div>
     </div>
 
-    <script src="js/login.js"></script>
+    <script>
+        const SUPABASE_URL = 'https://mpqvpqeysgoqjtcwtfk.supabase.co'; // رابط مشروعك في lumora
+        const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        document.getElementById('customerLoginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('custBtn');
+            const alertBox = document.getElementById('userError');
+            alertBox.style.display = 'none';
+
+            btn.disabled = true;
+            btn.innerText = 'جارٍ الدخول...';
+
+            const email = document.getElementById('customerEmail').value.trim();
+            const password = document.getElementById('customerPassword').value;
+
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+            if (error) {
+                alertBox.innerText = 'البريد أو كلمة المرور غير صحيحة';
+                alertBox.style.display = 'block';
+                btn.disabled = false;
+                btn.innerText = 'دخول';
+                return;
+            }
+
+            // توجيه الزبون إلى صفحة حسابه
+            window.location.href = 'account.html';
+        });
+    </script>
 </body>
 </html>
