@@ -1,31 +1,80 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>دخول التجار — Lumora</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/admin.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<section class="auth-screen" style="display:grid;min-height:100vh">
+  <div class="auth-card">
+    <div class="auth-logo" style="justify-content:center; text-align:center; flex-direction:column; margin-bottom: 20px;">
+      <h1 style="font-size:1.6rem; font-weight:800; margin-bottom: 5px;">لوحة تحكم <span style="color:var(--p)">التاجر</span></h1>
+      <p class="auth-sub" style="margin-bottom:0;">أدخل بياناتك للوصول إلى متجرك</p>
+    </div>
+
+    <form id="loginForm" class="form-stack">
+      <label>
+        <span>البريد الإلكتروني</span>
+        <input type="email" name="email" required dir="ltr" placeholder="vendor@example.com">
+      </label>
+      <label>
+        <span>كلمة المرور</span>
+        <input type="password" name="password" required dir="ltr">
+      </label>
+      <p class="err" id="loginErr" hidden style="color:red; text-align:center; font-weight:bold;"></p>
+      <button class="btn block" type="submit" id="loginBtn">
+        <span>دخول للوحة التاجر</span>
+      </button>
+    </form>
+
+    <div class="auth-note" style="text-align:center; margin-top:20px;">
+      ليس لديك متجر؟ <a href="become-vendor.html" style="color:var(--p); font-weight:bold; text-decoration:none;">افتح متجرك الآن</a>
+      <br><br>
+      <a href="index.html" style="color:var(--muted); text-decoration:none;">← العودة للمنصة</a>
+    </div>
+  </div>
+</section>
+
 <script>
 const sb = window.supabase.createClient(
   'https://mpoqvpqeysgoqjtcwtfk.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1wb3F2cHFleXNnb3FqdGN3dGZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0ODE1NTUsImV4cCI6MjEwNzA1NzU1NX0.i0YEZkxAmy4wEnX0QP8Hm2erm1bxPFmO6sp78clevb0'
 );
-const $ = s => document.querySelector(s);
 
-$('#loginForm')?.addEventListener('submit', async e => {
+const loginForm = document.getElementById('loginForm');
+const loginBtn = document.getElementById('loginBtn');
+const loginErr = document.getElementById('loginErr');
+
+loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const btn = $('#loginBtn'), err = $('#loginErr');
-  if(err) err.hidden = true;
-  if(btn) { btn.disabled = true; btn.textContent = 'جارٍ التحقق…'; }
+  loginErr.hidden = true;
+  loginBtn.disabled = true;
+  loginBtn.textContent = 'جارٍ التحقق…';
 
-  const fd = Object.fromEntries(new FormData(e.target));
-  const { data, error } = await sb.auth.signInWithPassword({
-    email: fd.email,
-    password: fd.password
-  });
+  const email = loginForm.querySelector('[name="email"]').value;
+  const password = loginForm.querySelector('[name="password"]').value;
 
-  if(btn) { btn.disabled = false; btn.textContent = 'دخول للوحة التاجر'; }
+  // محاولة تسجيل الدخول
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+  loginBtn.disabled = false;
+  loginBtn.textContent = 'دخول للوحة التاجر';
 
   if (error) {
-    if(err) { err.textContent = 'البريد أو كلمة المرور غير صحيحة'; err.hidden = false; }
-    else alert('البريد أو كلمة المرور غير صحيحة');
+    loginErr.textContent = 'البريد أو كلمة المرور غير صحيحة';
+    loginErr.hidden = false;
     return;
   }
 
-  // التحويل للوحة التاجر
-  location.href = 'vendor.html';
+  // التحويل لصفحة لوحة التاجر
+  window.location.href = 'vendor.html';
 });
 </script>
+</body>
+</html>
