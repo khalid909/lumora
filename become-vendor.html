@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>افتح متجرك — Lumora</title>
 <meta name="theme-color" content="#6d4aff">
+  
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -115,31 +116,50 @@ $('#vendorForm').addEventListener('submit', async e => {
     return;
   }
 
-  // 2. إنشاء المتجر
+   // 2. تسجيل الدخول أولًا (مهم جدًا!)
+  const { error: eLogin } = await sb.auth.signInWithPassword({
+    email: fd.email,
+    password: fd.password
+  });
+
+  if (eLogin) {
+    btn.disabled = false;
+    btn.textContent = '🚀 إنشاء المتجر';
+    err.textContent = 'فشل تسجيل الدخول: ' + eLogin.message;
+    err.hidden = false;
+    return;
+  }
+
+  // 3. الآن أنشئ المتجر (المستخدم مسجّل الدخول)
   const { error: e2 } = await sb.from('vendors').insert([{
     user_id: auth.user.id,
-    store_name: fd.store_name,
-    store_slug: fd.store_slug.toLowerCase(),
-    store_description: fd.store_description,
+    store_name: fd.store_name.trim(),
+    store_slug: fd.store_slug.toLowerCase().trim(),
+    store_description: (fd.store_description || '').trim(),
     email: fd.email,
     phone: fd.phone,
     city: fd.city,
     whatsapp: fd.whatsapp || fd.phone,
-    status: 'pending'
+    status: 'pending',
+    subscription_plan: 'trial',
+    subscription_status: 'trial'
   }]);
 
-  btn.disabled = false; btn.textContent = '🚀 إنشاء المتجر';
+  btn.disabled = false;
+  btn.textContent = '🚀 إنشاء المتجر';
 
   if (e2) {
-    err.textContent = e2.message.includes('duplicate')
+    err.textContent = e2.message.includes('duplicate') || e2.message.includes('unique')
       ? 'رابط المتجر مستخدم بالفعل. جرّب اسمًا آخر.'
       : e2.message;
     err.hidden = false;
     return;
   }
 
-  toast('✓ تم استلام طلبك! سيتم المراجعة قريبًا', 'ok');
-  setTimeout(() => location.href = 'vendor.html', 2000);
+  toast('🎉 تم إنشاء متجرك! جارٍ التحويل…', 'ok');
+
+  // 4. التحويل للوحة التاجر
+  setTimeout(() => location.href = 'vendor.html', 1800);
 });
 </script>
 </body>
