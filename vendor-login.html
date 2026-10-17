@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بوابة التجار - Hwayeg</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; }
+        body { background: #faf5ff; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .card { background: #fff; border: 1px solid #e9d5ff; border-radius: 14px; padding: 34px; width: 100%; max-width: 420px; box-shadow: 0 4px 12px rgba(124, 58, 237, 0.05); }
+        .badge { display: inline-block; background: #f3e8ff; color: #7c3aed; font-size: 0.75rem; font-weight: bold; padding: 4px 10px; border-radius: 20px; margin-bottom: 10px; }
+        h1 { font-size: 1.45rem; margin-bottom: 6px; color: #1e1b4b; }
+        p.sub { font-size: 0.85rem; color: #6b7280; margin-bottom: 22px; }
+        .form-group { margin-bottom: 16px; }
+        label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: #374151; }
+        input { width: 100%; padding: 11px 13px; border: 1px solid #d1d5db; border-radius: 8px; outline: none; }
+        input:focus { border-color: #8b5cf6; }
+        .btn { width: 100%; padding: 12px; background: #7c3aed; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 8px; }
+        .btn:hover { background: #6d28d9; }
+        .alert { background: #fee2e2; color: #dc2626; padding: 10px; border-radius: 7px; font-size: 0.85rem; margin-bottom: 14px; display: none; }
+        .footer-note { margin-top: 20px; text-align: center; font-size: 0.85rem; color: #6b7280; }
+        .footer-note a { color: #7c3aed; text-decoration: none; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div style="text-align: center;">
+            <span class="badge">بوابة الشركاء والتجار</span>
+            <h1>لوحة تحكم التاجر</h1>
+            <p class="sub">أدخل بيانات متجرك لمتابعة الطلبات والمبيعات</p>
+        </div>
+
+        <div id="vendorError" class="alert"></div>
+
+        <form id="vendorLoginForm">
+            <div class="form-group">
+                <label>البريد الإلكتروني للتاجر</label>
+                <input type="email" id="vendorEmail" placeholder="vendor@hwayeg.com" required>
+            </div>
+            <div class="form-group">
+                <label>كلمة المرور</label>
+                <input type="password" id="vendorPassword" placeholder="••••••••" required>
+            </div>
+            <button type="submit" id="vendorBtn" class="btn">دخول للوحة التاجر</button>
+        </form>
+
+        <div class="footer-note">
+            تريد فتح متجر جديد؟ <a href="become-vendor.html">انضم كتاجر الآن</a>
+            <div style="margin-top: 10px;">
+                <a href="login.html" style="color: #64748b; font-weight: normal;">← العودة لتسجيل دخول الزبائن</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://mpqvpqeysgoqjtcwtfk.supabase.co'; // رابط مشروعك في lumora
+        const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        document.getElementById('vendorLoginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('vendorBtn');
+            const alertBox = document.getElementById('vendorError');
+            alertBox.style.display = 'none';
+
+            btn.disabled = true;
+            btn.innerText = 'جارٍ التحقق من بيانات المتجر...';
+
+            const email = document.getElementById('vendorEmail').value.trim();
+            const password = document.getElementById('vendorPassword').value;
+
+            // 1. المصادقة عبر Supabase
+            const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+
+            if (authError) {
+                alertBox.innerText = 'البريد أو كلمة المرور غير صحيحة';
+                alertBox.style.display = 'block';
+                btn.disabled = false;
+                btn.innerText = 'دخول للوحة التاجر';
+                return;
+            }
+
+            // 2. التحقق من أن هذا المستخدم مسجل كتاجر في جدول vendors
+            const { data: vendor, error: vendorError } = await supabase
+                .from('vendors')
+                .select('id')
+                .eq('id', authData.user.id)
+                .maybeSingle();
+
+            if (!vendor) {
+                // إذا لم يكن بائعاً، يتم طرده لحماية لوحة التجار
+                await supabase.auth.signOut();
+                alertBox.innerText = 'عذراً، هذا الحساب ليس مسجلاً كتاجر. يرجى الدخول من بوابة الزبائن أو التقديم كبائع.';
+                alertBox.style.display = 'block';
+                btn.disabled = false;
+                btn.innerText = 'دخول للوحة التاجر';
+                return;
+            }
+
+            // 3. توجيه البائع إلى لوحته
+            window.location.href = 'vendor.html';
+        });
+    </script>
+</body>
+</html>
