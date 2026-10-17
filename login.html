@@ -1,102 +1,227 @@
 <!doctype html>
-<html lang="ar" dir="rtl" data-theme="light">
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>تسجيل الدخول — Lumora</title>
 <meta name="theme-color" content="#6d4aff">
+<meta name="robots" content="noindex">
+<title>Lumora</title>
 <link rel="icon" href="icon.svg" type="image/svg+xml">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/admin.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{color-scheme:light;--bg:#f6f5fb;--card:#fff;--ink:#17151f;--ink2:#555266;--muted:#8a869a;--line:#e5e2f0;--brand:#6d4aff;--grad:linear-gradient(135deg,#6d4aff,#a64bff,#ff6bb5);--ok:#0a7a3d;--bad:#c62828;--wash:rgba(109,74,255,.07)}
+@media (prefers-color-scheme:dark){:root:where(:not([data-theme="light"])){color-scheme:dark;--bg:#0f0e15;--card:#181722;--ink:#f1f0f7;--ink2:#c4c1d4;--muted:#8d8aa0;--line:#2a2938;--ok:#4cd68a;--bad:#ff7a7a;--wash:rgba(166,75,255,.12)}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0f0e15;--card:#181722;--ink:#f1f0f7;--ink2:#c4c1d4;--muted:#8d8aa0;--line:#2a2938;--ok:#4cd68a;--bad:#ff7a7a;--wash:rgba(166,75,255,.12)}
+*{box-sizing:border-box}[hidden]{display:none!important}html,body{margin:0}
+body{min-height:100vh;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;display:grid;place-items:center;padding:20px 16px;-webkit-font-smoothing:antialiased;
+background-image:radial-gradient(60% 40% at 85% 0%,rgba(166,75,255,.18),transparent),radial-gradient(50% 40% at 0% 100%,rgba(255,107,181,.14),transparent)}
+.wrap{width:min(440px,100%)}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.2rem;color:var(--ink);text-decoration:none}
+.brand i{width:36px;height:36px;border-radius:11px;background:var(--grad);color:#fff;display:grid;place-items:center;font-style:normal;font-size:.95rem}
+.seg{display:inline-flex;background:var(--wash);border-radius:10px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;padding:5px 10px;border-radius:8px;cursor:pointer;color:var(--ink2);font-weight:700;font-size:.8rem}
+.seg button[aria-pressed=true]{background:var(--card);color:var(--ink);box-shadow:0 0 0 1px var(--line)}
+.card{background:var(--card);border-radius:20px;padding:28px 24px;box-shadow:0 0 0 1px var(--line),0 18px 50px rgba(40,20,90,.10);display:flex;flex-direction:column;gap:14px}
+h1{margin:0;font-size:1.45rem}.sub{margin:0;color:var(--ink2);font-size:.93rem}
+form{display:flex;flex-direction:column;gap:14px;margin:0}
+label{display:flex;flex-direction:column;gap:6px;font-size:.86rem;font-weight:700;color:var(--ink2)}
+input[type=email],input[type=password],input[type=text],input[type=tel]{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;min-height:46px}
+input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(109,74,255,.2)}
+.pw{position:relative}.pw input{padding-inline-end:48px}
+.eye{position:absolute;inset-inline-end:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;cursor:pointer;font-size:1.1rem;padding:8px 10px;border-radius:8px}
+.btn{border:0;border-radius:12px;padding:13px 18px;font:inherit;font-weight:800;cursor:pointer;color:#fff;background:var(--grad);min-height:48px;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
+.btn:hover{filter:brightness(1.06)}.btn[disabled]{opacity:.55;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}.btn.ghost:hover{background:var(--wash);filter:none}
+.msg{margin:0;padding:10px 12px;border-radius:12px;font-size:.9rem;display:none}
+.msg.err{display:block;background:rgba(198,40,40,.1);color:var(--bad)}.msg.ok{display:block;background:rgba(10,122,61,.12);color:var(--ok)}
+.meter{height:6px;border-radius:99px;background:var(--line);overflow:hidden}.meter b{display:block;height:100%;width:0;border-radius:99px;transition:width .2s,background .2s}
+.hint{font-size:.8rem;color:var(--muted);margin:0}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:.9rem}
+a{color:var(--brand);font-weight:700}
+.or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.82rem}.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+.type{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.type label{flex-direction:row;align-items:center;justify-content:center;gap:8px;border:1px solid var(--line);border-radius:12px;padding:11px 8px;cursor:pointer;font-weight:700;color:var(--ink2)}
+.type label:has(input:checked){border-color:var(--brand);background:var(--wash);color:var(--ink)}
+.type input{accent-color:var(--brand)}
+.chk{flex-direction:row;align-items:flex-start;gap:8px;font-weight:500}.chk input{margin-top:4px;accent-color:var(--brand)}
+.hp{position:absolute;inset-inline-start:-9999px;width:1px;height:1px;overflow:hidden}
+.center{text-align:center}.big{font-size:2.6rem;line-height:1}
+.spin{width:26px;height:26px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--brand);animation:sp .8s linear infinite;margin:8px auto}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}.meter b{transition:none}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 </head>
-<body>
+<body data-title="login">
+<div class="wrap">
+  <div class="top"><a class="brand" href="./"><i dir="ltr">L+</i><span>Lumora</span></a>
+    <div class="seg" role="group" aria-label="Language"><button type="button" data-lang="ar">AR</button><button type="button" data-lang="fr">FR</button><button type="button" data-lang="en">EN</button></div></div>
 
-<section class="auth-screen" style="display:grid;min-height:100vh">
-  <div class="auth-card">
-    <div class="auth-logo">
-      <img src="icon.svg" alt="" width="42" height="42">
-      <h1>Lumora</h1>
+  <form class="card" id="f" novalidate>
+    <div><h1 data-i="login"></h1><p class="sub" data-i="login_sub"></p></div>
+    <label><span data-i="email"></span><input type="email" id="email" autocomplete="username" inputmode="email" dir="ltr" required></label>
+    <label><span data-i="password"></span><span class="pw"><input type="password" id="pass" autocomplete="current-password" dir="ltr" required><button type="button" class="eye" data-for="pass" data-al="show" tabindex="-1">👁</button></span></label>
+    <div class="row"><span></span><a href="forgot-password.html" data-i="forgot"></a></div>
+    <p class="msg" id="m" role="alert"></p>
+    <button class="btn" id="go" data-i="login"></button>
+    <button type="button" class="btn ghost" id="resend" hidden data-i="resend"></button>
+    <div id="alt" style="display:flex;flex-direction:column;gap:10px">
+      <div class="or" id="orline"><span data-i="or"></span></div>
+      <button type="button" class="btn ghost" id="magic" data-i="magic"></button>
+      <button type="button" class="btn ghost" id="google">G&nbsp; <span data-i="google"></span></button>
     </div>
-    <p class="auth-sub">سجّل دخولك لمتابعة طلباتك</p>
-
-    <form id="loginForm" class="form-stack">
-      <label>
-        <span>البريد الإلكتروني</span>
-        <input type="email" name="email" required autocomplete="email" dir="ltr" placeholder="you@example.com">
-      </label>
-      <label>
-        <span>كلمة المرور</span>
-        <input type="password" name="password" required autocomplete="current-password" dir="ltr">
-      </label>
-      <p class="err" id="loginErr" hidden></p>
-      <button class="btn block" type="submit" id="loginBtn">
-        <span>تسجيل الدخول</span>
-      </button>
-    </form>
-
-    <p class="auth-note">
-      ليس لديك حساب؟ <a href="signup.html" style="color:var(--p);font-weight:700">أنشئ حسابًا</a>
-      <br><br>
-      <a href="./" style="color:var(--muted)">← رجوع للمتجر</a>
-    </p>
-  </div>
-</section>
-
+    <p class="center sub"><span data-i="no_acc"></span> <a href="signup.html" id="toSignup" data-i="signup"></a></p>
+  </form>
+  <p class="center hint" style="margin-top:14px"><a href="./" data-i="back"></a></p>
+</div>
 <script>
+(() => {
+'use strict';
+
+/* ====== إعدادات (عدّلها فقط إن لزم) ====== */
 const SUPABASE_URL = 'https://mpoqvpqeysgoqjtcwtfk.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1wb3F2cHFleXNnb3FqdGN3dGZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0ODE1NTUsImV4cCI6MjEwNzA1NzU1NX0.i0YEZkxAmy4wEnX0QP8Hm2erm1bxPFmO6sp78clevb0';
+const HOME = { customer: 'account.html', seller: 'vendor.html', applicant: 'become-vendor.html' };
+const ENABLE_GOOGLE = false;   /* فعّله بعد تشغيل مزوّد Google في Supabase ▸ Authentication ▸ Providers */
+const ENABLE_MAGIC  = true;    /* دخول برابط بريدي بدون كلمة مرور */
+/* ========================================= */
 
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const I = {
+ar: { back:'رجوع للمتجر', login:'تسجيل الدخول', login_sub:'مرحبًا بعودتك! تابع طلباتك وإدارة حسابك.', signup:'إنشاء حساب', signup_sub:'أنشئ حسابك في أقل من دقيقة.',
+ email:'البريد الإلكتروني', password:'كلمة المرور', new_pass:'كلمة المرور الجديدة', confirm:'تأكيد كلمة المرور', full_name:'الاسم الكامل', phone:'الهاتف (اختياري)',
+ forgot:'نسيت كلمة المرور؟', no_acc:'ليس لديك حساب؟', has_acc:'لديك حساب بالفعل؟', magic:'أرسل لي رابط دخول بدون كلمة مرور', google:'المتابعة عبر Google', or:'أو',
+ i_buy:'🛍️ أريد التسوق', i_sell:'🏪 أريد البيع', agree:'أوافق على', policies:'الشروط والسياسات',
+ pw_hint:'8 أحرف على الأقل. الأفضل: أرقام وحروف كبيرة ورموز.', pw_weak:'ضعيفة', pw_ok:'متوسطة', pw_good:'جيدة', pw_strong:'قوية',
+ send_reset:'أرسل رابط الاستعادة', forgot_h:'استعادة كلمة المرور', forgot_sub:'أدخل بريدك وسنرسل لك رابطًا لتعيين كلمة مرور جديدة. يعمل للعملاء والبائعين.',
+ reset_sent:'إن كان هذا البريد مسجّلًا لدينا فقد أرسلنا إليه رابط الاستعادة. تحقق من صندوق الوارد والرسائل غير المرغوبة (Spam).',
+ reset_h:'تعيين كلمة مرور جديدة', save_pass:'حفظ كلمة المرور', reset_done:'تم تغيير كلمة المرور بنجاح ✓ جارٍ تحويلك لتسجيل الدخول…',
+ link_bad:'الرابط غير صالح أو انتهت صلاحيته. اطلب رابطًا جديدًا.', req_new:'طلب رابط جديد', checking:'جارٍ التحقق من الرابط…',
+ check_mail:'تحقق من بريدك', check_mail_sub:'أرسلنا رابط التأكيد إلى', resend:'إعادة إرسال الرسالة', resend_in:'إعادة الإرسال بعد', sent:'تم الإرسال ✓', magic_sent:'أرسلنا رابط الدخول إلى بريدك. افتحه للمتابعة.',
+ bad_login:'البريد أو كلمة المرور غير صحيحة.', unconfirmed:'لم يتم تأكيد بريدك بعد. افتح رسالة التأكيد أو أعد إرسالها.', rate:'محاولات كثيرة. انتظر دقيقة ثم أعد المحاولة.',
+ exists:'هذا البريد مسجّل بالفعل. جرّب تسجيل الدخول أو استعادة كلمة المرور.', weak:'كلمة المرور ضعيفة. استخدم 8 أحرف على الأقل.', mismatch:'كلمتا المرور غير متطابقتين.',
+ need_email:'أدخل بريدًا صحيحًا.', need_name:'أدخل اسمك.', need_terms:'يجب الموافقة على الشروط.', net:'تعذر الاتصال. تحقق من الإنترنت وأعد المحاولة.', generic:'حدث خطأ. أعد المحاولة.', show:'إظهار/إخفاء كلمة المرور', loading:'جارٍ المعالجة…' },
+fr: { back:'Retour à la boutique', login:'Connexion', login_sub:'Bon retour ! Suivez vos commandes et gérez votre compte.', signup:'Créer un compte', signup_sub:'Créez votre compte en moins d’une minute.',
+ email:'E-mail', password:'Mot de passe', new_pass:'Nouveau mot de passe', confirm:'Confirmer le mot de passe', full_name:'Nom complet', phone:'Téléphone (facultatif)',
+ forgot:'Mot de passe oublié ?', no_acc:'Pas de compte ?', has_acc:'Déjà un compte ?', magic:'Recevoir un lien de connexion sans mot de passe', google:'Continuer avec Google', or:'ou',
+ i_buy:'🛍️ Je veux acheter', i_sell:'🏪 Je veux vendre', agree:'J’accepte les', policies:'conditions et politiques',
+ pw_hint:'8 caractères minimum. Idéal : chiffres, majuscules et symboles.', pw_weak:'Faible', pw_ok:'Moyen', pw_good:'Bon', pw_strong:'Fort',
+ send_reset:'Envoyer le lien', forgot_h:'Récupérer le mot de passe', forgot_sub:'Saisissez votre e-mail, nous vous enverrons un lien pour choisir un nouveau mot de passe. Valable pour clients et vendeurs.',
+ reset_sent:'Si cet e-mail existe chez nous, un lien de récupération vient d’être envoyé. Vérifiez la boîte de réception et les spams.',
+ reset_h:'Nouveau mot de passe', save_pass:'Enregistrer', reset_done:'Mot de passe modifié ✓ Redirection vers la connexion…',
+ link_bad:'Lien invalide ou expiré. Demandez-en un nouveau.', req_new:'Demander un nouveau lien', checking:'Vérification du lien…',
+ check_mail:'Vérifiez votre e-mail', check_mail_sub:'Lien de confirmation envoyé à', resend:'Renvoyer le message', resend_in:'Renvoi possible dans', sent:'Envoyé ✓', magic_sent:'Lien de connexion envoyé. Ouvrez-le pour continuer.',
+ bad_login:'E-mail ou mot de passe incorrect.', unconfirmed:'E-mail non confirmé. Ouvrez le message de confirmation ou renvoyez-le.', rate:'Trop de tentatives. Patientez une minute.',
+ exists:'Cet e-mail est déjà inscrit. Connectez-vous ou récupérez votre mot de passe.', weak:'Mot de passe trop faible (8 caractères min.).', mismatch:'Les mots de passe ne correspondent pas.',
+ need_email:'Saisissez un e-mail valide.', need_name:'Saisissez votre nom.', need_terms:'Vous devez accepter les conditions.', net:'Connexion impossible. Vérifiez votre réseau.', generic:'Une erreur est survenue. Réessayez.', show:'Afficher/masquer le mot de passe', loading:'Traitement…' },
+en: { back:'Back to store', login:'Sign in', login_sub:'Welcome back! Track orders and manage your account.', signup:'Create account', signup_sub:'Create your account in under a minute.',
+ email:'Email', password:'Password', new_pass:'New password', confirm:'Confirm password', full_name:'Full name', phone:'Phone (optional)',
+ forgot:'Forgot password?', no_acc:'No account yet?', has_acc:'Already have an account?', magic:'Email me a passwordless sign-in link', google:'Continue with Google', or:'or',
+ i_buy:'🛍️ I want to shop', i_sell:'🏪 I want to sell', agree:'I agree to the', policies:'terms & policies',
+ pw_hint:'At least 8 characters. Better: numbers, capitals and symbols.', pw_weak:'Weak', pw_ok:'Fair', pw_good:'Good', pw_strong:'Strong',
+ send_reset:'Send reset link', forgot_h:'Reset your password', forgot_sub:'Enter your email and we will send a link to choose a new password. Works for customers and sellers.',
+ reset_sent:'If that email is registered, a reset link is on its way. Check your inbox and spam folder.',
+ reset_h:'Choose a new password', save_pass:'Save password', reset_done:'Password changed ✓ Redirecting to sign in…',
+ link_bad:'This link is invalid or has expired. Request a new one.', req_new:'Request a new link', checking:'Checking your link…',
+ check_mail:'Check your email', check_mail_sub:'We sent a confirmation link to', resend:'Resend email', resend_in:'Resend available in', sent:'Sent ✓', magic_sent:'Sign-in link sent to your email. Open it to continue.',
+ bad_login:'Wrong email or password.', unconfirmed:'Email not confirmed yet. Open the confirmation email or resend it.', rate:'Too many attempts. Wait a minute and retry.',
+ exists:'This email is already registered. Sign in or reset your password.', weak:'Password too weak (8 characters minimum).', mismatch:'Passwords do not match.',
+ need_email:'Enter a valid email.', need_name:'Enter your name.', need_terms:'You must accept the terms.', net:'Cannot connect. Check your network and retry.', generic:'Something went wrong. Try again.', show:'Show/hide password', loading:'Working…' }
+};
+
 const $ = s => document.querySelector(s);
-
-$('#loginForm').addEventListener('submit', async e => {
-  e.preventDefault();
-  const btn = $('#loginBtn'), err = $('#loginErr');
-  err.hidden = true;
-  btn.disabled = true;
-  btn.innerHTML = '<span>جارٍ التحقق…</span>';
-
-  const fd = Object.fromEntries(new FormData(e.target));
-  const { data, error } = await sb.auth.signInWithPassword({
-    email: fd.email,
-    password: fd.password
-  });
-
-  btn.disabled = false;
-  btn.innerHTML = '<span>تسجيل الدخول</span>';
-
-  if (error) {
-    err.textContent = error.message === 'Invalid login credentials'
-      ? 'البريد أو كلمة المرور غير صحيحة'
-      : error.message;
-    err.hidden = false;
-    return;
-  }
-
-  // تحقق من الدور
-  const { data: profile } = await sb
-    .from('profiles')
-    .select('role')
-    .eq('user_id', data.user.id)
-    .maybeSingle();
-
-  const { data: admin } = await sb
-    .from('admins')
-    .select('role')
-    .eq('user_id', data.user.id)
-    .maybeSingle();
-
-  // التوجيه حسب الدور
-  if (admin) location.href = 'admin.html';
-  else location.href = 'account.html';
+const $$ = s => [...document.querySelectorAll(s)];
+let lang; try { lang = JSON.parse(localStorage.getItem('lm_lang')); } catch {}
+if (!I[lang]) lang = (navigator.language || 'ar').slice(0, 2);
+if (!I[lang]) lang = 'ar';
+const t = k => I[lang][k] ?? I.en[k] ?? k;
+try { const th = JSON.parse(localStorage.getItem('lm_theme')); if (th === 'dark' || th === 'light') document.documentElement.setAttribute('data-theme', th); } catch {}
+function applyI18n() {
+  document.documentElement.lang = lang; document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  $$('[data-i]').forEach(e => { e.textContent = t(e.dataset.i); });
+  $$('[data-ph]').forEach(e => { e.placeholder = t(e.dataset.ph); });
+  $$('[data-al]').forEach(e => { e.setAttribute('aria-label', t(e.dataset.al)); });
+  $$('[data-lang]').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang === lang));
+  document.title = t(document.body.dataset.title) + ' — Lumora';
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-lang]'); if (b) { lang = b.dataset.lang; try { localStorage.setItem('lm_lang', JSON.stringify(lang)); } catch {} applyI18n(); if (window.onLang) window.onLang(); }
+  const eye = e.target.closest('.eye'); if (eye) { const inp = document.getElementById(eye.dataset.for); inp.type = inp.type === 'password' ? 'text' : 'password'; }
 });
+const rel = f => new URL(f, location.href).href;
+/* يسمح فقط بروابط داخلية من نوع page.html — يمنع التحويل لمواقع خارجية (open redirect) */
+function safeNext(def) {
+  const n = new URLSearchParams(location.search).get('next') || '';
+  return (/^(?![a-z][a-z0-9+.-]*:|\/\/|\\)[\w\-\/.]+\.html(\?[\w=&%.\-]*)?(#[\w\-]*)?$/i.test(n) && !n.includes('..')) ? n : def;
+}
+const validEmail = s => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s);
+function say(el, text, kind) { el.className = 'msg' + (kind ? ' ' + kind : ''); el.textContent = text || ''; if (!text) el.style.display = 'none'; else el.style.display = ''; }
+function errText(e) {
+  const m = String((e && (e.message || e.error_description)) || '') + ' ' + String((e && (e.code || e.status)) || '');
+  if (/invalid login|invalid_credentials/i.test(m)) return t('bad_login');
+  if (/not confirmed|email_not_confirmed/i.test(m)) return t('unconfirmed');
+  if (/rate.?limit|too many|429|after \d+ seconds/i.test(m)) return t('rate');
+  if (/already registered|user_already_exists/i.test(m)) return t('exists');
+  if (/weak|at least \d+ char|password should/i.test(m)) return t('weak');
+  if (/fetch|network|failed to/i.test(m)) return t('net');
+  return t('generic');
+}
+function strength(p) {
+  let s = 0; if (p.length >= 8) s++; if (p.length >= 12) s++; if (/[a-z]/.test(p) && /[A-Z]/.test(p)) s++; if (/\d/.test(p)) s++; if (/[^\w\s]/.test(p)) s++;
+  if (p.length < 8) s = Math.min(s, 1);
+  return Math.min(s, 4);
+}
+function bindMeter(input, bar, label) {
+  const cols = ['#c62828', '#e08a00', '#c9a400', '#2f9e44', '#0a7a3d'], names = ['pw_weak', 'pw_weak', 'pw_ok', 'pw_good', 'pw_strong'];
+  const upd = () => { const v = input.value, s = v ? strength(v) : -1; bar.style.width = v ? (s + 1) * 20 + '%' : '0'; bar.style.background = cols[Math.max(s, 0)]; label.textContent = v ? t(names[s]) : ''; };
+  input.addEventListener('input', upd); return upd;
+}
+function cooldown(btn, label, secs, after) {
+  let n = secs; btn.disabled = true;
+  const tick = () => { if (n <= 0) { btn.disabled = false; btn.textContent = after(); return; } btn.textContent = label() + ' ' + n + 's'; n--; setTimeout(tick, 1000); };
+  tick();
+}
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'implicit' } });
+function homeFor(user) {
+  const a = user && user.user_metadata && user.user_metadata.account_type;
+  return a === 'seller' ? HOME.seller : HOME.customer;
+}
 
-(async () => {
-  const { data: { session } } = await sb.auth.getSession();
-  if (session) location.href = 'account.html';
+
+const nextUrl = u => safeNext(homeFor(u));
+const f = $('#f'), m = $('#m');
+if (!ENABLE_MAGIC) $('#magic').hidden = true;
+if (!ENABLE_GOOGLE) $('#google').hidden = true;
+if (!ENABLE_MAGIC && !ENABLE_GOOGLE) $('#alt').hidden = true;
+{ const n = new URLSearchParams(location.search).get('next'); if (n) $('#toSignup').href = 'signup.html?next=' + encodeURIComponent(n); }
+sb.auth.getSession().then(({ data }) => { if (data && data.session) location.replace(nextUrl(data.session.user)); });
+f.addEventListener('submit', async e => {
+  e.preventDefault(); say(m, ''); $('#resend').hidden = true;
+  const email = $('#email').value.trim(), pass = $('#pass').value;
+  if (!validEmail(email) || !pass) return say(m, t('need_email'), 'err');
+  const b = $('#go'); b.disabled = true;
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+    if (error) { say(m, errText(error), 'err'); if (/not confirmed/i.test(error.message || '')) $('#resend').hidden = false; b.disabled = false; return; }
+    location.replace(nextUrl(data.user));
+  } catch (er) { say(m, errText(er), 'err'); b.disabled = false; }
+});
+$('#resend').addEventListener('click', async () => {
+  const email = $('#email').value.trim(); if (!validEmail(email)) return;
+  const { error } = await sb.auth.resend({ type: 'signup', email, options: { emailRedirectTo: rel('login.html') } });
+  say(m, error ? errText(error) : t('sent'), error ? 'err' : 'ok');
+});
+$('#magic').addEventListener('click', async () => {
+  const email = $('#email').value.trim(); if (!validEmail(email)) { say(m, t('need_email'), 'err'); $('#email').focus(); return; }
+  const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo: rel(safeNext('login.html')) } });
+  say(m, error ? errText(error) : t('magic_sent'), error ? 'err' : 'ok');
+});
+$('#google').addEventListener('click', async () => {
+  const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: rel('login.html') } });
+  if (error) say(m, errText(error), 'err');
+});
+window.onLang = () => {};
+
+applyI18n();
 })();
 </script>
 </body>
