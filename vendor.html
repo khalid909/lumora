@@ -1,242 +1,319 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<!doctype html>
+<html lang="ar" dir="rtl" data-theme="light">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة التاجر - Hwayeg</title>
-    <link rel="stylesheet" href="css/style.css">
-    <!-- Supabase JS CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        :root {
-            --primary: #8b5cf6;
-            --primary-gradient: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
-            --bg-light: #f8fafc;
-            --card-bg: #ffffff;
-            --text-dark: #1e293b;
-            --text-muted: #64748b;
-            --border-color: #e2e8f0;
-        }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>لوحة التاجر — Lumora</title>
+<meta name="theme-color" content="#6d4aff">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/admin.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  body { display: flex; min-height: 100vh; background: var(--bg); }
+  
+  /* القائمة الجانبية */
+  .sidebar { width: 260px; background: var(--surface); border-inline-end: 1px solid var(--line); display: flex; flex-direction: column; position: fixed; top:0; bottom:0; right:0; z-index:10; }
+  .sidebar-header { padding: 24px 20px; display: flex; align-items: center; gap: 10px; font-size: 1.2rem; font-weight: 800; border-bottom: 1px solid var(--line); }
+  .sidebar-nav { padding: 20px 12px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; color: var(--muted); font-weight: 600; cursor: pointer; transition: 0.2s; border: 0; background: transparent; width: 100%; text-align: right; font-size: 0.95rem; }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: var(--grad); color: #fff; box-shadow: 0 8px 16px -8px rgba(109,74,255,.4); }
+  .sidebar-footer { padding: 20px; border-top: 1px solid var(--line); }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-        body { background-color: var(--bg-light); color: var(--text-dark); display: flex; min-height: 100vh; }
+  /* المحتوى الرئيسي */
+  .main-content { flex: 1; margin-right: 260px; padding: 30px; overflow-y: auto; }
+  .page-section { display: none; animation: fade 0.3s; }
+  .page-section.active { display: block; }
+  .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+  .top-bar h1 { font-size: 1.6rem; margin: 0; }
 
-        /* Sidebar */
-        .sidebar {
-            width: 260px;
-            background: #fff;
-            border-left: 1px solid var(--border-color);
-            padding: 24px 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        .sidebar-brand { font-size: 1.4rem; font-weight: bold; color: var(--primary); display: flex; align-items: center; gap: 8px; }
-        .nav-links { list-style: none; display: flex; flex-direction: column; gap: 8px; }
-        .nav-item button {
-            width: 100%;
-            text-align: right;
-            padding: 12px 14px;
-            border: none;
-            background: transparent;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.95rem;
-            color: var(--text-muted);
-            transition: all 0.2s;
-        }
-        .nav-item button.active, .nav-item button:hover {
-            background: #f3f0ff;
-            color: var(--primary);
-            font-weight: 600;
-        }
+  /* البطاقات */
+  .welcome-banner { background: var(--grad); color: #fff; padding: 30px; border-radius: 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; box-shadow: 0 10px 24px -10px rgba(109,74,255,.5); }
+  .welcome-banner h2 { margin: 0 0 8px 0; font-size: 1.5rem; }
+  .welcome-banner p { margin: 0; opacity: 0.9; }
+  .trial-badge { background: rgba(255,255,255,0.2); padding: 12px 24px; border-radius: 12px; text-align: center; border: 1px solid rgba(255,255,255,0.3); backdrop-filter: blur(10px); }
+  .trial-badge b { display: block; font-size: 1.2rem; margin-bottom: 4px; }
 
-        /* Main Content */
-        .main-content { flex: 1; padding: 24px 32px; overflow-y: auto; }
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 24px; text-align: center; box-shadow: 0 4px 12px -4px rgba(0,0,0,.05); }
+  .stat-card h3 { margin: 0 0 8px 0; font-size: 0.9rem; color: var(--muted); font-weight: 700; }
+  .stat-card .val { font-size: 2rem; font-weight: 800; color: var(--text); }
+  
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 24px; margin-bottom: 24px; }
+  .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+  .card-header h3 { margin: 0; font-size: 1.1rem; }
+  
+  /* جدول */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 14px; text-align: right; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
+  th { color: var(--muted); font-weight: 700; background: var(--surface2); }
+  tr:last-child td { border-bottom: 0; }
+  .badge { padding: 6px 12px; border-radius: 99px; font-size: 0.75rem; font-weight: 700; }
+  .badge.pending { background: rgba(255,159,28,.15); color: var(--warn); }
+  .badge.completed { background: rgba(0,200,150,.15); color: var(--a); }
 
-        /* Header Bar */
-        .top-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-        }
-        .btn-logout {
-            background-color: #fee2e2;
-            color: #ef4444;
-            border: none;
-            padding: 8px 18px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        /* Banner */
-        .vendor-banner {
-            background: var(--primary-gradient);
-            color: white;
-            padding: 24px;
-            border-radius: 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-        }
-        .subscription-badge {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 10px 16px;
-            border-radius: 12px;
-            text-align: center;
-        }
-
-        /* Stats Grid */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-        .stat-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-        }
-        .stat-title { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; }
-        .stat-value { font-size: 1.6rem; font-weight: bold; color: var(--text-dark); }
-
-        /* Panels Container */
-        .panel-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        .panel-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .btn-action {
-            background: var(--primary);
-            color: #fff;
-            padding: 8px 16px;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-        }
-
-        /* Order/Product Item Rows */
-        .data-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid #f1f5f9;
-        }
-        .data-row:last-child { border-bottom: none; }
-        .status-pill {
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-        }
-        .status-pending { background: #fef3c7; color: #b45309; }
-        .status-delivered { background: #dcfce7; color: #15803d; }
-    </style>
+  @media(max-width: 900px) {
+    .sidebar { transform: translateX(100%); transition: 0.3s; }
+    .sidebar.open { transform: none; }
+    .main-content { margin-right: 0; }
+    .stats-grid { grid-template-columns: 1fr; }
+  }
+</style>
 </head>
 <body>
 
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <div class="sidebar-brand">
-            <span>✨ لوحة التاجر</span>
-        </div>
-        <ul class="nav-links">
-            <li class="nav-item"><button class="active" onclick="switchSection('dashboard')">📊 الرئيسية</button></li>
-            <li class="nav-item"><button onclick="switchSection('orders')">📦 الطلبات</button></li>
-            <li class="nav-item"><button onclick="switchSection('products')">🏷️ المنتجات</button></li>
-            <li class="nav-item"><button onclick="switchSection('settings')">⚙️ إعدادات المتجر</button></li>
-        </ul>
-    </aside>
+<!-- القائمة الجانبية -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <img src="icon.svg" width="30" height="30" alt="">
+    <span>Lumora</span>
+  </div>
+  <nav class="sidebar-nav">
+    <button class="nav-item active" data-target="home">📊 الرئيسية</button>
+    <button class="nav-item" data-target="orders">🛒 الطلبات <span class="badge pending" style="margin-right:auto" id="navOrdersCount">0</span></button>
+    <button class="nav-item" data-target="products">📦 المنتجات</button>
+    <button class="nav-item" data-target="settings">⚙️ إعدادات المتجر</button>
+  </nav>
+  <div class="sidebar-footer">
+    <a href="./" class="btn ghost block sm" style="margin-bottom:8px">👁️ عرض المتجر</a>
+    <button class="btn danger block sm" id="logoutBtn">خروج</button>
+  </div>
+</aside>
 
-    <!-- Content Area -->
-    <main class="main-content">
-        <div class="top-bar">
-            <a href="stores.html" class="btn-action" style="background:#e2e8f0; color:#334155; text-decoration:none;">عرض المتجر ↗</a>
-            <button class="btn-logout" id="logoutBtn">خروج</button>
-        </div>
+<!-- المحتوى الرئيسي -->
+<main class="main-content">
+  
+  <!-- شريط علوي -->
+  <div class="top-bar">
+    <h1 id="pageTitle">الرئيسية</h1>
+    <button class="btn ghost sm" onclick="document.getElementById('sidebar').classList.toggle('open')" style="display:none" id="menuBtn">☰</button>
+  </div>
 
-        <!-- Banner -->
-        <div class="vendor-banner">
-            <div>
-                <h2 id="storeTitle">متجر ...</h2>
-                <p>مرحباً بك في لوحة تحكم وإدارة مبيعاتك</p>
-            </div>
-            <div class="subscription-badge">
-                <span style="font-size:0.75rem; display:block;">حالة الاشتراك</span>
-                <strong id="subBadge">تجربة مجانية</strong>
-            </div>
-        </div>
+  <!-- 1. الرئيسية -->
+  <section class="page-section active" id="sec-home">
+    <div class="welcome-banner">
+      <div>
+        <h2 id="storeName">جاري التحميل...</h2>
+        <p>مرحباً بك في لوحة تحكم متجرك</p>
+      </div>
+      <div class="trial-badge">
+        <b id="subStatus">تجربة مجانية</b>
+        <span style="font-size:0.8rem; opacity:0.8" id="trialTime">متبقي يومان</span>
+      </div>
+    </div>
 
-        <!-- Dashboard Section -->
-        <div id="section-dashboard">
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-title">إجمالي المبيعات</div>
-                    <div class="stat-value" id="totalSales">0 د.ج</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-title">إجمالي الطلبات</div>
-                    <div class="stat-value" id="totalOrders">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-title">المنتجات النشطة</div>
-                    <div class="stat-value" id="activeProducts">0</div>
-                </div>
-            </div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <h3>إجمالي المبيعات</h3>
+        <div class="val" id="statSales">0 دج</div>
+      </div>
+      <div class="stat-card">
+        <h3>إجمالي الطلبات</h3>
+        <div class="val" id="statOrders">0</div>
+      </div>
+      <div class="stat-card">
+        <h3>المنتجات النشطة</h3>
+        <div class="val" id="statProducts">0</div>
+      </div>
+    </div>
 
-            <div class="panel-card">
-                <div class="panel-header">
-                    <h3>📦 أحدث الطلبات</h3>
-                    <button class="btn-action" onclick="switchSection('orders')">عرض الكل</button>
-                </div>
-                <div id="latestOrdersList">
-                    <p style="color:var(--text-muted); text-align:center; padding: 20px;">جارٍ تحميل الطلبات...</p>
-                </div>
-            </div>
-        </div>
+    <div class="card">
+      <div class="card-header">
+        <h3>📦 أحدث الطلبات</h3>
+      </div>
+      <div id="recentOrders">
+        <p class="muted" style="text-align:center; padding:20px;">لا توجد طلبات بعد</p>
+      </div>
+    </div>
+  </section>
 
-        <!-- Products Section -->
-        <div id="section-products" style="display: none;">
-            <div class="panel-card">
-                <div class="panel-header">
-                    <h3>🏷️ إدارة المنتجات</h3>
-                    <button class="btn-action" onclick="openAddProductModal()">+ إضافة منتج جديد</button>
-                </div>
-                <div id="productsList">
-                    <!-- Dynamic Product List -->
-                </div>
-            </div>
-        </div>
+  <!-- 2. الطلبات -->
+  <section class="page-section" id="sec-orders">
+    <div class="card">
+      <div class="card-header">
+        <h3>جميع الطلبات</h3>
+      </div>
+      <div class="table-wrap" id="allOrdersList">
+        <p class="muted" style="text-align:center; padding:20px;">جاري تحميل الطلبات...</p>
+      </div>
+    </div>
+  </section>
 
-        <!-- Orders Section -->
-        <div id="section-orders" style="display: none;">
-            <div class="panel-card">
-                <div class="panel-header">
-                    <h3>📦 جميع الطلبات</h3>
-                </div>
-                <div id="allOrdersList">
-                    <!-- Dynamic Orders List -->
-                </div>
-            </div>
-        </div>
-    </main>
+  <!-- 3. المنتجات -->
+  <section class="page-section" id="sec-products">
+    <div class="card">
+      <div class="card-header">
+        <h3>منتجاتي</h3>
+      </div>
+      <div class="table-wrap" id="allProductsList">
+        <p class="muted" style="text-align:center; padding:20px;">جاري تحميل المنتجات...</p>
+      </div>
+    </div>
+  </section>
 
-    <script src="js/vendor.js"></script>
+  <!-- 4. الإعدادات -->
+  <section class="page-section" id="sec-settings">
+    <div class="card">
+      <div class="card-header">
+        <h3>بيانات المتجر</h3>
+      </div>
+      <div style="display:grid; gap:16px;" id="settingsForm">
+         <p class="muted">جاري التحميل...</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+const sb = window.supabase.createClient(
+  'https://mpoqvpqeysgoqjtcwtfk.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1wb3F2cHFleXNnb3FqdGN3dGZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0ODE1NTUsImV4cCI6MjEwNzA1NzU1NX0.i0YEZkxAmy4wEnX0QP8Hm2erm1bxPFmO6sp78clevb0'
+);
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const fmt = n => new Intl.NumberFormat('ar-DZ', { style: 'currency', currency: 'DZD', minimumFractionDigits: 0 }).format(n || 0);
+
+let currentVendor = null;
+
+// التنقل بين الأقسام
+$$('.nav-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    // إزالة active من الكل
+    $$('.nav-item').forEach(b => b.classList.remove('active'));
+    $$('.page-section').forEach(s => s.classList.remove('active'));
+    
+    // إضافة active للزر والقسم المطلوب
+    btn.classList.add('active');
+    const target = btn.dataset.target;
+    $(`#sec-${target}`).classList.add('active');
+    
+    // تحديث العنوان
+    $('#pageTitle').textContent = btn.textContent.replace(/[0-9]/g, '').trim();
+    
+    // إغلاق السايدبار في الجوال
+    if(window.innerWidth <= 900) $('#sidebar').classList.remove('open');
+
+    // تحميل البيانات عند الحاجة
+    if(target === 'orders') loadOrders();
+    if(target === 'products') loadProducts();
+    if(target === 'settings') loadSettings();
+  });
+});
+
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { location.href = 'vendor-login.html'; return; }
+
+  const { data: vendor } = await sb.from('vendors').select('*').eq('user_id', session.user.id).maybeSingle();
+  if (!vendor) { alert('لا يوجد متجر مرتبط بحسابك'); return; }
+
+  currentVendor = vendor;
+  
+  // تعبئة البيانات الأساسية
+  $('#storeName').textContent = vendor.store_name;
+  $('#statSales').textContent = fmt(vendor.total_sales);
+  $('#statOrders').textContent = vendor.total_orders || 0;
+  $('#statProducts').textContent = vendor.total_products || 0;
+
+  if (vendor.subscription_status === 'trial') {
+    const end = new Date(vendor.trial_ends_at);
+    const days = Math.max(0, Math.ceil((end - new Date()) / (1000 * 60 * 60 * 24)));
+    $('#trialTime').textContent = `متبقي ${days} يوم`;
+  } else if (vendor.subscription_status === 'active') {
+    $('#subStatus').textContent = 'اشتراك نشط';
+    $('#trialTime').textContent = vendor.subscription_plan;
+  }
+
+  loadRecentOrders();
+}
+
+async function loadRecentOrders() {
+  const { data } = await sb.from('orders').select('*').eq('vendor_id', currentVendor.id).order('created_at', { ascending: false }).limit(5);
+  const el = $('#recentOrders');
+  
+  if (!data || data.length === 0) {
+    el.innerHTML = '<p class="muted" style="text-align:center; padding:20px;">لا توجد طلبات حديثة</p>';
+    return;
+  }
+  
+  el.innerHTML = `<table><thead><tr><th>رقم الطلب</th><th>العميل</th><th>المبلغ</th><th>الحالة</th></tr></thead><tbody>
+    ${data.map(o => `<tr>
+      <td>#${o.id}</td>
+      <td>${o.customer_name || '—'}</td>
+      <td style="font-weight:bold">${fmt(o.total_amount)}</td>
+      <td><span class="badge ${o.status === 'pending' ? 'pending' : 'completed'}">${o.status}</span></td>
+    </tr>`).join('')}
+  </tbody></table>`;
+}
+
+async function loadOrders() {
+  const el = $('#allOrdersList');
+  el.innerHTML = '<p class="muted" style="text-align:center; padding:20px;">جاري التحميل...</p>';
+  
+  const { data, error } = await sb.from('orders').select('*').eq('vendor_id', currentVendor.id).order('created_at', { ascending: false });
+  
+  if (error || !data || data.length === 0) {
+    el.innerHTML = '<div style="text-align:center; padding:40px;"><div style="font-size:3rem; margin-bottom:10px;">📭</div><h3>لا توجد طلبات</h3><p class="muted">عندما يشتري العملاء من متجرك، ستظهر طلباتهم هنا.</p></div>';
+    return;
+  }
+
+  $('#navOrdersCount').textContent = data.filter(o => o.status === 'pending').length;
+
+  el.innerHTML = `<table><thead><tr><th>رقم الطلب</th><th>التاريخ</th><th>العميل</th><th>المدينة</th><th>المبلغ</th><th>الحالة</th></tr></thead><tbody>
+    ${data.map(o => `<tr>
+      <td><b>#${o.id}</b></td>
+      <td class="muted">${new Date(o.created_at).toLocaleDateString('ar')}</td>
+      <td>${o.customer_name || '—'}</td>
+      <td>${o.city || '—'}</td>
+      <td style="font-weight:bold; color:var(--p)">${fmt(o.total_amount)}</td>
+      <td><span class="badge ${o.status === 'pending' ? 'pending' : 'completed'}">${o.status}</span></td>
+    </tr>`).join('')}
+  </tbody></table>`;
+}
+
+async function loadProducts() {
+  const el = $('#allProductsList');
+  const { data, error } = await sb.from('products').select('*').eq('vendor_id', currentVendor.id);
+  
+  if (error || !data || data.length === 0) {
+    el.innerHTML = '<div style="text-align:center; padding:40px;"><div style="font-size:3rem; margin-bottom:10px;">📦</div><h3>لا توجد منتجات</h3><p class="muted">لم تقم بإضافة أي منتج بعد. (ميزة الإضافة ستتوفر قريباً)</p></div>';
+    return;
+  }
+
+  el.innerHTML = `<table><thead><tr><th>المنتج</th><th>السعر</th><th>المخزون</th></tr></thead><tbody>
+    ${data.map(p => `<tr>
+      <td><b>${p.name?.ar || p.name || 'منتج'}</b></td>
+      <td>${fmt(p.price)}</td>
+      <td>${p.stock} قطعة</td>
+    </tr>`).join('')}
+  </tbody></table>`;
+}
+
+function loadSettings() {
+  const el = $('#settingsForm');
+  el.innerHTML = `
+    <div style="display:grid; gap:12px; max-width:500px;">
+      <label><span style="font-size:0.9rem; font-weight:bold; color:var(--muted);">اسم المتجر</span><br><b>${currentVendor.store_name}</b></label>
+      <label><span style="font-size:0.9rem; font-weight:bold; color:var(--muted);">رابط المتجر (Slug)</span><br><code style="background:var(--surface2); padding:4px 8px; border-radius:6px;">${currentVendor.store_slug}</code></label>
+      <label><span style="font-size:0.9rem; font-weight:bold; color:var(--muted);">البريد الإلكتروني</span><br><b>${currentVendor.email}</b></label>
+      <label><span style="font-size:0.9rem; font-weight:bold; color:var(--muted);">الهاتف</span><br><b dir="ltr">${currentVendor.phone || '—'}</b></label>
+      <label><span style="font-size:0.9rem; font-weight:bold; color:var(--muted);">حالة الاشتراك</span><br><span class="badge pending">${currentVendor.subscription_status}</span></label>
+    </div>
+  `;
+}
+
+$('#logoutBtn').addEventListener('click', async () => {
+  await sb.auth.signOut();
+  location.href = './';
+});
+
+// تفعيل زر القائمة في الجوال
+if(window.innerWidth <= 900) $('#menuBtn').style.display = 'block';
+
+init();
+</script>
 </body>
 </html>
