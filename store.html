@@ -3,50 +3,55 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>تفاصيل المنتج — Lumora</title>
+<title>المتجر — Lumora</title>
 <link rel="icon" id="dynamicFavicon" href="icon.svg" type="image/svg+xml">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  .container { max-width: 1000px; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
-  @media (max-width: 768px) { .container { grid-template-columns: 1fr; } }
-  .product-image { background: var(--surface2); border-radius: 20px; overflow: hidden; border: 1px solid var(--line); position: relative; }
-  .product-image img { width: 100%; height: 100%; object-fit: cover; aspect-ratio: 1; display: block; }
-  .badge-offer { position: absolute; top: 15px; right: 15px; background: var(--grad); color: #fff; padding: 6px 14px; border-radius: 99px; font-weight: 800; font-size: 0.85rem; }
-  .product-info h1 { font-size: 1.8rem; margin-bottom: 10px; line-height: 1.3; }
-  .price-box { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
-  .price-box .price { font-size: 2rem; font-weight: 800; color: var(--p); }
-  .features-list { list-style: none; padding: 0; margin: 20px 0; border-top: 1px solid var(--line); padding-top: 20px; }
-  .features-list li { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; font-size: 0.95rem; }
-  .features-list li::before { content: '✓'; color: var(--a); font-weight: 800; }
-  .qty-box { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin-bottom: 24px; }
-  .qty-box button { width: 40px; height: 40px; background: var(--surface2); font-size: 1.2rem; font-weight: bold; cursor: pointer; border: none; }
-  .qty-box input { width: 50px; height: 40px; text-align: center; border: 0; font-weight: bold; font-size: 1.1rem; background: transparent; }
-  .order-form { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px; margin-top: 20px; }
-  .form-group { margin-bottom: 14px; }
-  .form-group label { display: block; font-size: 0.9rem; font-weight: 700; margin-bottom: 6px; }
-  .form-group input { width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface2); font-size: 1rem; outline: none; }
-  .summary { background: var(--surface2); border-radius: 12px; padding: 16px; margin-top: 16px; }
-  .summary-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95rem; }
-  .summary-row.total { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 10px; font-weight: 800; font-size: 1.2rem; color: var(--p); }
-  .submit-btn { width: 100%; padding: 16px; font-size: 1.1rem; border-radius: 12px; margin-top: 20px; }
+  .store-header { background: var(--surface); border-bottom: 1px solid var(--line); padding: 40px 20px; text-align: center; }
+  .store-logo { width: 90px; height: 90px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; }
+  .store-logo img { width: 100%; height: 100%; object-fit: contain; border-radius: 16px; }
+  .store-header h1 { font-size: 2rem; margin-bottom: 8px; }
+  .store-header p { color: var(--muted); max-width: 600px; margin: 0 auto; }
+  
+  .store-topbar { background: var(--surface); border-bottom: 1px solid var(--line); padding: 12px; }
+  .store-topbar .logo-text { font-weight: 800; font-size: 1.2rem; color: var(--text); text-decoration: none; display: flex; align-items: center; gap: 8px;}
+  .store-topbar .logo-text img { width: 30px; height: 30px; object-fit: contain; border-radius: 6px; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(235px,1fr)); gap: 18px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; transition: .25s; cursor: pointer; text-decoration: none; color: inherit; display: block; }
+  .card:hover { box-shadow: var(--shadow); border-color: var(--p); transform: translateY(-2px); }
+  .thumb { position: relative; aspect-ratio: 1; background: var(--surface2); }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .card .body { padding: 14px; }
+  .card h3 { font-size: 1rem; line-height: 1.35; margin-bottom: 4px; min-height: 2.7em; }
+  .price b { font-size: 1.1rem; color: var(--p); }
 </style>
 </head>
 <body>
 
-<div class="topbar" style="background:var(--surface); border-bottom:1px solid var(--line); padding:12px;">
-  <div style="max-width:1000px; margin:0 auto; display:flex; justify-content:space-between; align-items:center;">
-    <a href="index.html" style="font-weight:800; text-decoration:none; color:inherit; display:flex; align-items:center; gap:8px;">
-      <img src="icon.svg" width="24" height="24" alt=""> Lumora
+<div class="topbar store-topbar">
+  <div class="wrap" style="display:flex; justify-content:space-between; align-items:center;">
+    <a href="#" id="topbarBrand" class="logo-text">
+      <span id="topbarName">جاري التحميل...</span>
     </a>
-    <a href="javascript:history.back()" class="btn sm ghost">← العودة للمتجر</a>
+    <a href="index.html" class="btn sm ghost">← العودة للمنصة</a>
   </div>
 </div>
 
-<div class="container" id="productContainer">
-  <p class="muted" style="text-align:center; grid-column:1/-1; padding: 50px;">جاري تحميل تفاصيل المنتج...</p>
-</div>
+<header class="store-header">
+  <div class="store-logo" id="storeLogo">S</div>
+  <h1 id="storeName">جاري التحميل...</h1>
+  <p id="storeDesc">مرحباً بك في متجرنا</p>
+</header>
+
+<main class="wrap" style="padding: 40px 0;">
+  <h2 style="margin-bottom: 20px; font-size: 1.4rem;">منتجات المتجر</h2>
+  <div class="grid" id="productsGrid">
+    <p class="muted" style="grid-column:1/-1; text-align:center;">جاري تحميل المنتجات...</p>
+  </div>
+</main>
 
 <script>
 const sb = window.supabase.createClient(
@@ -55,159 +60,61 @@ const sb = window.supabase.createClient(
 );
 const fmt = n => new Intl.NumberFormat('ar-DZ', { style: 'currency', currency: 'DZD', minimumFractionDigits: 0 }).format(n || 0);
 
-let currentProduct = null;
-let currentQty = 1;
-const SHIPPING_FEE = 500;
+async function loadStore() {
+  const params = new URLSearchParams(window.location.search);
+  const slug = params.get('slug');
+  if (!slug) return;
 
-async function loadProduct() {
-  try {
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get('id');
-    
-    if (!id) {
-      throw new Error('لم يتم العثور على رقم المنتج في الرابط.');
-    }
-
-    const { data: product, error } = await sb.from('products').select('*').eq('id', id).maybeSingle();
-    
-    if (error) throw error;
-    if (!product) throw new Error('هذا المنتج غير موجود أو تم حذفه من قاعدة البيانات.');
-
-    currentProduct = product;
-    if (product.img) document.getElementById('dynamicFavicon').href = product.img;
-
-    document.getElementById('productContainer').innerHTML = `
-      <div class="product-image">
-        <div class="badge-offer">عرض خاص: الدفع عند الاستلام</div>
-        ${product.img 
-          ? `<img src="${product.img}" alt="${product.name?.ar}">` 
-          : `<div style="width:100%; aspect-ratio:1; display:grid; place-items:center; font-size:6rem;">📦</div>`}
-      </div>
-
-      <div class="product-info">
-        <h1>${product.name?.ar || 'منتج'}</h1>
-        <div class="price-box">
-          <span class="price">${fmt(product.price)}</span>
-        </div>
-        <ul class="features-list">
-          <li>${product.description?.ar || 'منتج عالي الجودة يناسب احتياجاتك اليومية.'}</li>
-          <li>متوفر الآن في المخزون (${product.stock} قطعة)</li>
-          <li>الدفع عند الاستلام — اطلب الآن ويوصلك وين حبيت</li>
-        </ul>
-
-        <div class="order-form">
-          <h3 style="margin-bottom: 16px;">🛒 اطلب الآن</h3>
-          
-          <div class="form-group">
-            <label>الكمية</label>
-            <div class="qty-box">
-              <button onclick="updateQty(-1)">−</button>
-              <input type="number" id="qtyInput" value="1" min="1" max="${product.stock}" readonly>
-              <button onclick="updateQty(1)">+</button>
-            </div>
-          </div>
-
-          <h3 style="margin-top:20px; font-size:1.1rem; margin-bottom: 12px;">معلومات الزبون</h3>
-          <div class="form-group">
-            <label>الاسم الكامل</label>
-            <input type="text" id="custName" placeholder="الاسم واللقب">
-          </div>
-          <div class="form-group">
-            <label>رقم الهاتف</label>
-            <input type="tel" id="custPhone" placeholder="05xxxxxxxx" dir="ltr">
-          </div>
-          <div class="form-group">
-            <label>العنوان (الولاية والبلدية)</label>
-            <input type="text" id="custAddress" placeholder="مثال: الجزائر العاصمة، بئر مراد رايس">
-          </div>
-
-          <div class="summary">
-            <div class="summary-row">
-              <span>سعر المنتج (1x)</span>
-              <span id="sumSubtotal">${fmt(product.price)}</span>
-            </div>
-            <div class="summary-row">
-              <span>سعر الشحن</span>
-              <span id="sumShipping">${fmt(SHIPPING_FEE)}</span>
-            </div>
-            <div class="summary-row total">
-              <span>الإجمالي المتوقع</span>
-              <span id="sumTotal">${fmt(product.price + SHIPPING_FEE)}</span>
-            </div>
-          </div>
-
-          <button class="btn submit-btn" onclick="submitOrder()">اطلب الآن (الدفع عند الاستلام)</button>
-        </div>
-      </div>
-    `;
-  } catch (err) {
-    // عرض الخطأ بوضوح بدلاً من التعليق
-    document.getElementById('productContainer').innerHTML = `
-      <div style="grid-column:1/-1; text-align:center; padding:50px; background:var(--surface); border-radius:20px; border:1px solid var(--danger);">
-        <h2 style="color:var(--danger); margin-bottom:10px;">⚠️ عذراً، حدث خطأ</h2>
-        <p style="color:var(--text); font-weight:bold;">${err.message}</p>
-        <p class="muted" style="margin-top:20px;">تأكد من أن المنتج موجود، وأن صلاحيات القراءة (RLS) مفعلة في Supabase.</p>
-        <a href="index.html" class="btn" style="margin-top:20px;">العودة للرئيسية</a>
-      </div>
-    `;
+  const { data: vendor, error: vErr } = await sb.from('vendors').select('*').eq('store_slug', slug).maybeSingle();
+  if (vErr || !vendor) {
+    document.getElementById('storeName').textContent = 'المتجر غير موجود';
+    return;
   }
-}
 
-function updateQty(change) {
-  const input = document.getElementById('qtyInput');
-  let val = parseInt(input.value) + change;
-  if (val < 1) val = 1;
-  if (val > currentProduct.stock) val = currentProduct.stock;
-  input.value = val;
-  currentQty = val;
+  document.title = vendor.store_name + ' — Lumora';
+  document.getElementById('topbarName').textContent = vendor.store_name;
   
-  const subtotal = currentProduct.price * val;
-  document.getElementById('sumSubtotal').textContent = fmt(subtotal);
-  document.getElementById('sumTotal').textContent = fmt(subtotal + SHIPPING_FEE);
-}
+  const topbarBrand = document.getElementById('topbarBrand');
+  if (vendor.store_logo) {
+    topbarBrand.innerHTML = `<img src="${vendor.store_logo}" alt=""> <span>${vendor.store_name}</span>`;
+    document.getElementById('storeLogo').innerHTML = `<img src="${vendor.store_logo}" alt="">`;
+    document.getElementById('dynamicFavicon').href = vendor.store_logo;
+  } else {
+    topbarBrand.innerHTML = `<span>${vendor.store_name}</span>`;
+    document.getElementById('storeLogo').textContent = vendor.store_name.charAt(0).toUpperCase();
+  }
+  
+  document.getElementById('storeName').textContent = vendor.store_name;
+  if(vendor.store_description) document.getElementById('storeDesc').textContent = vendor.store_description;
 
-async function submitOrder() {
-  const name = document.getElementById('custName').value.trim();
-  const phone = document.getElementById('custPhone').value.trim();
-  const address = document.getElementById('custAddress').value.trim();
+  const { data: products, error: pErr } = await sb.from('products').select('*').eq('vendor_id', vendor.id);
+  const grid = document.getElementById('productsGrid');
 
-  if (!name || !phone || !address) {
-    alert('الرجاء ملء جميع معلومات الزبون (الاسم، الهاتف، العنوان).');
+  if (pErr) {
+    grid.innerHTML = `<p class="muted" style="grid-column:1/-1; text-align:center; color:red;">خطأ: ${pErr.message}</p>`;
+    return;
+  }
+  if (!products || products.length === 0) {
+    grid.innerHTML = '<p class="muted" style="grid-column:1/-1; text-align:center; padding:40px;">هذا المتجر لم يقم بإضافة أي منتجات بعد.</p>';
     return;
   }
 
-  const btn = document.querySelector('.submit-btn');
-  btn.textContent = 'جاري إرسال الطلب...';
-  btn.disabled = true;
-
-  const orderId = 'ORD' + Math.floor(Math.random() * 1000000);
-  const total = (currentProduct.price * currentQty) + SHIPPING_FEE;
-
-  const { error } = await sb.from('orders').insert([{
-    id: orderId,
-    customer_name: name,
-    phone: phone,
-    city: 'غير محدد', 
-    address: address,
-    notes: 'الكمية: ' + currentQty,
-    total_amount: total,
-    status: 'pending',
-    vendor_id: currentProduct.vendor_id,
-    items: [{ id: currentProduct.id, name: currentProduct.name?.ar, qty: currentQty, price: currentProduct.price }]
-  }]);
-
-  if (error) {
-    alert('حدث خطأ أثناء حفظ الطلب: ' + error.message);
-    btn.textContent = 'اطلب الآن (الدفع عند الاستلام)';
-    btn.disabled = false;
-    return;
-  }
-
-  alert('🎉 تم استلام طلبك بنجاح! سنتصل بك قريباً للتأكيد.');
-  window.location.href = 'index.html'; 
+  grid.innerHTML = products.map(p => `
+    <a class="card" href="product.html?id=${p.id}">
+      <div class="thumb">
+        ${p.img ? `<img src="${p.img}" alt="${p.name?.ar || 'منتج'}">` : `<div style="width:100%; height:100%; display:grid; place-items:center; font-size:3rem; background:var(--surface2);">📦</div>`}
+      </div>
+      <div class="body">
+        <h3>${p.name?.ar || 'منتج'}</h3>
+        <div class="price">
+          <b>${fmt(p.price)}</b>
+        </div>
+      </div>
+    </a>
+  `).join('');
 }
 
-loadProduct();
+loadStore();
 </script>
 </body>
 </html>
