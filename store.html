@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>المتجر — Lumora</title>
-<!-- الأيقونة الافتراضية، سيتم تغييرها عبر الجافاسكريبت -->
 <link rel="icon" id="dynamicFavicon" href="icon.svg" type="image/svg+xml">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
@@ -16,28 +15,37 @@
   .store-header h1 { font-size: 2rem; margin-bottom: 8px; }
   .store-header p { color: var(--muted); max-width: 600px; margin: 0 auto; }
   
-  /* شريط علوي خاص بالمتجر */
   .store-topbar { background: var(--surface); border-bottom: 1px solid var(--line); padding: 12px; }
   .store-topbar .logo-text { font-weight: 800; font-size: 1.2rem; color: var(--text); text-decoration: none; display: flex; align-items: center; gap: 8px;}
   .store-topbar .logo-text img { width: 30px; height: 30px; object-fit: contain; border-radius: 6px; }
 
-  /* شبكة المنتجات */
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(235px,1fr)); gap: 18px; }
-  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; transition: .25s; }
-  .card:hover { box-shadow: var(--shadow); border-color: var(--p); }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; transition: .25s; cursor: pointer; }
+  .card:hover { box-shadow: var(--shadow); border-color: var(--p); transform: translateY(-2px); }
   .thumb { position: relative; aspect-ratio: 1; background: var(--surface2); }
   .thumb img { width: 100%; height: 100%; object-fit: cover; }
   .card .body { padding: 14px; }
   .card h3 { font-size: 1rem; line-height: 1.35; margin-bottom: 4px; min-height: 2.7em; }
   .price b { font-size: 1.1rem; color: var(--p); }
+
+  /* نافذة المنتج (Modal) */
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px; backdrop-filter: blur(4px); }
+  .modal.active { display: flex; }
+  .modal-content { background: var(--surface); border-radius: 20px; max-width: 800px; width: 100%; display: grid; grid-template-columns: 1fr 1fr; overflow: hidden; position: relative; max-height: 90vh; }
+  .modal-img { background: var(--surface2); width: 100%; height: 100%; object-fit: cover; min-height: 300px; }
+  .modal-body { padding: 30px; display: flex; flex-direction: column; justify-content: center; overflow-y: auto; }
+  .modal-body h2 { font-size: 1.8rem; margin-bottom: 10px; }
+  .modal-body .p-price { font-size: 2rem; font-weight: 800; color: var(--p); margin-bottom: 20px; }
+  .modal-body p { color: var(--muted); line-height: 1.8; margin-bottom: 20px; }
+  .modal-close { position: absolute; top: 15px; left: 15px; background: var(--surface); border: 1px solid var(--line); border-radius: 50%; width: 40px; height: 40px; display: grid; place-items: center; cursor: pointer; z-index: 10; font-size: 1.2rem; }
+  @media(max-width: 768px) { .modal-content { grid-template-columns: 1fr; } .modal-img { height: 250px; } }
 </style>
 </head>
 <body>
 
-<!-- الشريط العلوي (تم ربطه بالجافاسكريبت) -->
+<!-- الشريط العلوي -->
 <div class="topbar store-topbar">
   <div class="wrap" style="display:flex; justify-content:space-between; align-items:center;">
-    <!-- هنا سيتم وضع شعار واسم المتجر -->
     <a href="#" id="topbarBrand" class="logo-text">
       <span id="topbarName">جاري التحميل...</span>
     </a>
@@ -58,6 +66,20 @@
   </div>
 </main>
 
+<!-- نافذة تفاصيل المنتج -->
+<div class="modal" id="productModal">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <img class="modal-img" id="modalImg" src="" alt="">
+    <div class="modal-body">
+      <h2 id="modalName"></h2>
+      <div class="p-price" id="modalPrice"></div>
+      <p id="modalDesc">لا يوجد وصف لهذا المنتج.</p>
+      <button class="btn lg block" style="margin-top:auto;">🛒 أضف للسلة</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const sb = window.supabase.createClient(
   'https://mpoqvpqeysgoqjtcwtfk.supabase.co',
@@ -65,50 +87,33 @@ const sb = window.supabase.createClient(
 );
 const fmt = n => new Intl.NumberFormat('ar-DZ', { style: 'currency', currency: 'DZD', minimumFractionDigits: 0 }).format(n || 0);
 
+let storeProducts = []; // لتخزين المنتجات لاستخدامها في النافذة
+
 async function loadStore() {
   const params = new URLSearchParams(window.location.search);
   const slug = params.get('slug');
+  if (!slug) return;
 
-  if (!slug) {
-    document.getElementById('storeName').textContent = 'خطأ: رابط المتجر غير صالح';
-    return;
-  }
-
-  // 1. جلب بيانات المتجر
   const { data: vendor, error: vErr } = await sb.from('vendors').select('*').eq('store_slug', slug).maybeSingle();
-  
-  if (vErr || !vendor) {
-    document.getElementById('storeName').textContent = 'المتجر غير موجود';
-    return;
-  }
+  if (vErr || !vendor) return;
 
-  // 2. تحديث البيانات في الصفحة
   document.title = vendor.store_name + ' — Lumora';
-  
-  // تحديث الشريط العلوي
   document.getElementById('topbarName').textContent = vendor.store_name;
   const topbarBrand = document.getElementById('topbarBrand');
+  
   if (vendor.store_logo) {
     topbarBrand.innerHTML = `<img src="${vendor.store_logo}" alt=""> <span>${vendor.store_name}</span>`;
+    document.getElementById('storeLogo').innerHTML = `<img src="${vendor.store_logo}" alt="">`;
+    document.getElementById('dynamicFavicon').href = vendor.store_logo;
   } else {
     topbarBrand.innerHTML = `<span>${vendor.store_name}</span>`;
+    document.getElementById('storeLogo').textContent = vendor.store_name.charAt(0).toUpperCase();
   }
-
-  // تحديث الهيدر الرئيسي
+  
   document.getElementById('storeName').textContent = vendor.store_name;
   if(vendor.store_description) document.getElementById('storeDesc').textContent = vendor.store_description;
 
-  const logoEl = document.getElementById('storeLogo');
-  const faviconEl = document.getElementById('dynamicFavicon');
-  
-  if (vendor.store_logo) {
-    logoEl.innerHTML = `<img src="${vendor.store_logo}" alt="${vendor.store_name}">`;
-    faviconEl.href = vendor.store_logo;
-  } else {
-    logoEl.textContent = vendor.store_name.charAt(0).toUpperCase();
-  }
-
-  // 3. جلب منتجات المتجر
+  // جلب المنتجات
   const { data: products, error: pErr } = await sb.from('products').select('*').eq('vendor_id', vendor.id);
   const grid = document.getElementById('productsGrid');
 
@@ -117,21 +122,51 @@ async function loadStore() {
     return;
   }
 
-  grid.innerHTML = products.map(p => `
-    <article class="card">
+  storeProducts = products; // حفظ المنتجات
+
+  // عرض المنتجات مع إضافة onclick لفتح النافذة
+  grid.innerHTML = products.map((p, index) => `
+    <article class="card" onclick="openModal(${index})">
       <div class="thumb">
         ${p.img ? `<img src="${p.img}" alt="${p.name?.ar || 'منتج'}">` : `<div style="width:100%; height:100%; display:grid; place-items:center; font-size:3rem; background:var(--surface2);">📦</div>`}
       </div>
       <div class="body">
         <h3>${p.name?.ar || 'منتج'}</h3>
-        <div class="price">
-          <b>${fmt(p.price)}</b>
-        </div>
-        <button class="btn sm block" style="margin-top:10px;">أضف للسلة</button>
+        <div class="price"><b>${fmt(p.price)}</b></div>
       </div>
     </article>
   `).join('');
 }
+
+// فتح النافذة
+function openModal(index) {
+  const p = storeProducts[index];
+  if (!p) return;
+
+  const imgEl = document.getElementById('modalImg');
+  if (p.img) {
+    imgEl.src = p.img;
+    imgEl.style.display = 'block';
+  } else {
+    imgEl.style.display = 'none'; // إخفاء الصورة إذا لم توجد
+  }
+
+  document.getElementById('modalName').textContent = p.name?.ar || 'منتج';
+  document.getElementById('modalPrice').textContent = fmt(p.price);
+  document.getElementById('modalDesc').textContent = p.description?.ar || 'لا يوجد وصف تفصيلي لهذا المنتج.';
+
+  document.getElementById('productModal').classList.add('active');
+}
+
+// إغلاق النافذة
+function closeModal() {
+  document.getElementById('productModal').classList.remove('active');
+}
+
+// إغلاق النافذة عند الضغط خارجها
+document.getElementById('productModal').addEventListener('click', (e) => {
+  if (e.target.id === 'productModal') closeModal();
+});
 
 loadStore();
 </script>
