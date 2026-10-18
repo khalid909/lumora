@@ -4,36 +4,53 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>تفاصيل المنتج — Lumora</title>
+<link rel="icon" id="dynamicFavicon" href="icon.svg" type="image/svg+xml">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  .product-wrapper { max-width: 1000px; margin: 40px auto; padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
-  @media (max-width: 768px) { .product-wrapper { grid-template-columns: 1fr; } }
-  .img-box { background: var(--surface2); border-radius: 20px; overflow: hidden; border: 1px solid var(--line); }
-  .img-box img { width: 100%; height: auto; display: block; }
-  .info-box h1 { font-size: 2rem; margin-bottom: 10px; }
-  .price { font-size: 2rem; font-weight: 800; color: var(--p); margin-bottom: 20px; }
-  .desc { color: var(--muted); line-height: 1.8; margin-bottom: 30px; }
-  .form-box { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px; }
-  .form-box h3 { margin-bottom: 15px; font-size: 1.2rem; }
+  .product-wrapper { max-width: 1000px; margin: 40px auto; padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+  @media (max-width: 768px) { .product-wrapper { grid-template-columns: 1fr; gap: 20px; } }
+  
+  /* معرض الصور */
+  .gallery-container { display: flex; flex-direction: column; gap: 12px; }
+  .main-image { background: var(--surface2); border-radius: 20px; overflow: hidden; border: 1px solid var(--line); aspect-ratio: 1; display: flex; align-items: center; justify-content: center; }
+  .main-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+  .thumbnails { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; }
+  .thumbnails img { width: 70px; height: 70px; object-fit: cover; border-radius: 10px; border: 2px solid transparent; cursor: pointer; transition: 0.2s; }
+  .thumbnails img:hover, .thumbnails img.active { border-color: var(--p); transform: scale(1.05); }
+
+  /* تفاصيل المنتج */
+  .info-box h1 { font-size: 2rem; margin-bottom: 10px; line-height: 1.3; }
+  .price-box { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
+  .price { font-size: 2.2rem; font-weight: 800; color: var(--p); }
+  .desc { color: var(--muted); line-height: 1.8; margin-bottom: 30px; font-size: 1.05rem; }
+  
+  /* نموذج الطلب */
+  .form-box { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 24px; box-shadow: 0 10px 30px -15px rgba(0,0,0,0.1); }
+  .form-box h3 { margin-bottom: 20px; font-size: 1.3rem; border-bottom: 1px solid var(--line); padding-bottom: 10px; }
   .form-group { margin-bottom: 15px; }
   .form-group label { display: block; font-weight: 700; margin-bottom: 8px; font-size: 0.9rem; }
-  .form-group input { width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface2); font-size: 1rem; outline: none; }
-  .submit-btn { width: 100%; padding: 16px; font-size: 1.1rem; border-radius: 12px; margin-top: 20px; cursor: pointer; border: none; color: white; background: var(--grad); font-weight: bold; }
+  .form-group input { width: 100%; padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface2); font-size: 1rem; outline: none; transition: 0.2s; }
+  .form-group input:focus { border-color: var(--p); }
+  .submit-btn { width: 100%; padding: 18px; font-size: 1.2rem; border-radius: 12px; margin-top: 10px; cursor: pointer; border: none; color: white; background: var(--grad); font-weight: bold; transition: 0.3s; }
+  .submit-btn:hover { opacity: 0.9; transform: translateY(-2px); }
+  .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 </style>
 </head>
 <body>
 
-<div style="background:var(--surface); border-bottom:1px solid var(--line); padding:12px;">
+<div style="background:var(--surface); border-bottom:1px solid var(--line); padding:12px; position:sticky; top:0; z-index:50;">
   <div style="max-width:1000px; margin:0 auto; display:flex; justify-content:space-between; align-items:center;">
-    <a href="index.html" style="font-weight:800; text-decoration:none; color:inherit;">Lumora</a>
+    <a href="index.html" style="font-weight:800; text-decoration:none; color:inherit; display:flex; align-items:center; gap:8px;">
+      <img src="icon.svg" width="24" height="24" alt=""> Lumora
+    </a>
     <a href="javascript:history.back()" class="btn sm ghost">← العودة</a>
   </div>
 </div>
 
 <div id="app" class="product-wrapper">
-  <p style="grid-column: 1/-1; text-align: center; padding: 50px;">جاري التحميل...</p>
+  <p style="grid-column: 1/-1; text-align: center; padding: 50px;">جاري تحميل المنتج...</p>
 </div>
 
 <script>
@@ -53,21 +70,45 @@ async function load() {
   }
 
   try {
-    // جلب المنتج
     const { data: p, error } = await sb.from('products').select('*').eq('id', id).single();
-    
     if (error) throw error;
     if (!p) throw new Error("المنتج غير موجود");
 
+    // تجميع كل الصور في مصفوفة واحدة
+    let allImages = [];
+    if (p.img) allImages.push(p.img);
+    if (p.gallery && Array.isArray(p.gallery)) {
+      p.gallery.forEach(img => { if (img !== p.img) allImages.push(img); });
+    }
+
+    // بناء معرض الصور
+    let galleryHtml = '';
+    if (allImages.length > 0) {
+      galleryHtml = `
+        <div class="main-image">
+          <img id="mainImg" src="${allImages[0]}" alt="${p.name?.ar}">
+        </div>
+        ${allImages.length > 1 ? `
+          <div class="thumbnails">
+            ${allImages.map((img, i) => `<img src="${img}" class="${i===0?'active':''}" onclick="changeImage(this, '${img}')">`).join('')}
+          </div>
+        ` : ''}
+      `;
+    } else {
+      galleryHtml = `<div class="main-image"><div style="font-size:6rem;">📦</div></div>`;
+    }
+
     // عرض البيانات
     app.innerHTML = `
-      <div class="img-box">
-        ${p.img ? `<img src="${p.img}" alt="${p.name?.ar}">` : `<div style="height:300px; display:grid; place-items:center; font-size:5rem;">📦</div>`}
+      <div class="gallery-container">
+        ${galleryHtml}
       </div>
       <div class="info-box">
         <h1>${p.name?.ar || 'منتج'}</h1>
-        <div class="price">${fmt(p.price)}</div>
-        <div class="desc">${p.description?.ar || 'لا يوجد وصف لهذا المنتج.'}</div>
+        <div class="price-box">
+          <div class="price">${fmt(p.price)}</div>
+        </div>
+        <div class="desc">${p.description?.ar || 'لا يوجد وصف تفصيلي لهذا المنتج.'}</div>
         
         <div class="form-box">
           <h3>اطلب الآن (الدفع عند الاستلام)</h3>
@@ -80,10 +121,10 @@ async function load() {
             <input type="tel" id="cPhone" placeholder="05xxxxxxxx" dir="ltr">
           </div>
           <div class="form-group">
-            <label>العنوان</label>
-            <input type="text" id="cAddr" placeholder="الولاية، البلدية">
+            <label>العنوان (الولاية، البلدية)</label>
+            <input type="text" id="cAddr" placeholder="الولاية، البلدية، الشارع">
           </div>
-          <button class="submit-btn" onclick="order('${p.id}', '${p.vendor_id}', ${p.price})">تأكيد الطلب</button>
+          <button class="submit-btn" id="orderBtn" onclick="order('${p.id}', '${p.vendor_id}', ${p.price})">تأكيد الطلب</button>
         </div>
       </div>
     `;
@@ -92,17 +133,32 @@ async function load() {
       <div style="grid-column:1/-1; text-align:center; padding:40px;">
         <h2 style="color:red; margin-bottom:10px;">⚠️ حدث خطأ</h2>
         <p>${err.message}</p>
+        <a href="index.html" class="btn" style="margin-top:20px;">العودة للرئيسية</a>
       </div>
     `;
   }
+}
+
+// تغيير الصورة الرئيسية عند الضغط على صورة مصغرة
+function changeImage(thumb, url) {
+  document.getElementById('mainImg').src = url;
+  document.querySelectorAll('.thumbnails img').forEach(img => img.classList.remove('active'));
+  thumb.classList.add('active');
 }
 
 async function order(pid, vid, price) {
   const name = document.getElementById('cName').value.trim();
   const phone = document.getElementById('cPhone').value.trim();
   const addr = document.getElementById('cAddr').value.trim();
+  const btn = document.getElementById('orderBtn');
 
-  if (!name || !phone || !addr) { alert('يرجى ملء جميع الحقول'); return; }
+  if (!name || !phone || !addr) { 
+    alert('يرجى ملء جميع الحقول (الاسم، الهاتف، العنوان).'); 
+    return; 
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'جاري تأكيد الطلب...';
 
   const { error } = await sb.from('orders').insert([{
     id: 'ORD' + Date.now(),
@@ -110,16 +166,18 @@ async function order(pid, vid, price) {
     phone: phone,
     city: 'غير محدد',
     address: addr,
-    total_amount: price + 500,
+    total_amount: price + 500, // 500 هو سعر الشحن (يمكنك تغييره)
     status: 'pending',
     vendor_id: vid,
     items: [{ id: pid, qty: 1, price: price }]
   }]);
 
   if (error) {
-    alert('خطأ: ' + error.message);
+    alert('خطأ في النظام: ' + error.message);
+    btn.disabled = false;
+    btn.textContent = 'تأكيد الطلب';
   } else {
-    alert('🎉 تم استلام طلبك بنجاح!');
+    alert('🎉 تم استلام طلبك بنجاح! سنتصل بك قريباً للتأكيد.');
     window.location.href = 'index.html';
   }
 }
