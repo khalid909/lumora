@@ -11,27 +11,17 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   .store-header { background: var(--surface); border-bottom: 1px solid var(--line); padding: 40px 20px; text-align: center; }
-    .store-logo { 
-    width: 90px; 
-    height: 90px; 
-    background: transparent; /* إزالة الخلفية البنفسجية */
-    margin: 0 auto 16px; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-  }
-  .store-logo img { 
-    width: 100%; 
-    height: 100%; 
-    object-fit: contain; /* إظهار الصورة كاملة بدون قص */
-    border-radius: 16px; /* حواف ناعمة فقط */
-    box-shadow: none; /* إزالة الظل الزائد */
-  }
-  .store-logo img { width: 100%; height: 100%; object-fit: cover; }
+  .store-logo { width: 90px; height: 90px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; }
+  .store-logo img { width: 100%; height: 100%; object-fit: contain; border-radius: 16px; }
   .store-header h1 { font-size: 2rem; margin-bottom: 8px; }
   .store-header p { color: var(--muted); max-width: 600px; margin: 0 auto; }
   
-  /* إعادة استخدام شبكة المنتجات من المنصة */
+  /* شريط علوي خاص بالمتجر */
+  .store-topbar { background: var(--surface); border-bottom: 1px solid var(--line); padding: 12px; }
+  .store-topbar .logo-text { font-weight: 800; font-size: 1.2rem; color: var(--text); text-decoration: none; display: flex; align-items: center; gap: 8px;}
+  .store-topbar .logo-text img { width: 30px; height: 30px; object-fit: contain; border-radius: 6px; }
+
+  /* شبكة المنتجات */
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(235px,1fr)); gap: 18px; }
   .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; transition: .25s; }
   .card:hover { box-shadow: var(--shadow); border-color: var(--p); }
@@ -44,11 +34,12 @@
 </head>
 <body>
 
-<!-- شريط علوي بسيط -->
-<div class="topbar" style="background:var(--surface); border-bottom:1px solid var(--line); color:var(--text); padding:12px;">
+<!-- الشريط العلوي (تم ربطه بالجافاسكريبت) -->
+<div class="topbar store-topbar">
   <div class="wrap" style="display:flex; justify-content:space-between; align-items:center;">
-    <a href="index.html" class="logo" style="font-weight:800; text-decoration:none; color:inherit; display:flex; align-items:center; gap:8px;">
-      <img src="icon.svg" width="24" height="24" alt=""> Lumora
+    <!-- هنا سيتم وضع شعار واسم المتجر -->
+    <a href="#" id="topbarBrand" class="logo-text">
+      <span id="topbarName">جاري التحميل...</span>
     </a>
     <a href="index.html" class="btn sm ghost">← العودة للمنصة</a>
   </div>
@@ -91,25 +82,33 @@ async function loadStore() {
     return;
   }
 
-  // عرض بيانات المتجر
+  // 2. تحديث البيانات في الصفحة
   document.title = vendor.store_name + ' — Lumora';
+  
+  // تحديث الشريط العلوي
+  document.getElementById('topbarName').textContent = vendor.store_name;
+  const topbarBrand = document.getElementById('topbarBrand');
+  if (vendor.store_logo) {
+    topbarBrand.innerHTML = `<img src="${vendor.store_logo}" alt=""> <span>${vendor.store_name}</span>`;
+  } else {
+    topbarBrand.innerHTML = `<span>${vendor.store_name}</span>`;
+  }
+
+  // تحديث الهيدر الرئيسي
   document.getElementById('storeName').textContent = vendor.store_name;
   if(vendor.store_description) document.getElementById('storeDesc').textContent = vendor.store_description;
 
-  // --- تعديل اللوغو والايقونة ---
   const logoEl = document.getElementById('storeLogo');
   const faviconEl = document.getElementById('dynamicFavicon');
   
   if (vendor.store_logo) {
-    // إذا كان هناك صورة مرفوعة
     logoEl.innerHTML = `<img src="${vendor.store_logo}" alt="${vendor.store_name}">`;
-    faviconEl.href = vendor.store_logo; // تغيير أيقونة المتصفح
+    faviconEl.href = vendor.store_logo;
   } else {
-    // إذا لم توجد صورة، نستخدم الحرف الأول
     logoEl.textContent = vendor.store_name.charAt(0).toUpperCase();
   }
 
-  // 2. جلب منتجات هذا المتجر
+  // 3. جلب منتجات المتجر
   const { data: products, error: pErr } = await sb.from('products').select('*').eq('vendor_id', vendor.id);
   const grid = document.getElementById('productsGrid');
 
@@ -118,7 +117,6 @@ async function loadStore() {
     return;
   }
 
-  // 3. عرض المنتجات
   grid.innerHTML = products.map(p => `
     <article class="card">
       <div class="thumb">
