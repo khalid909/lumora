@@ -74,6 +74,8 @@ async function load() {
     if (error) throw error;
     if (!p) throw new Error("المنتج غير موجود");
 
+    if (p.img) document.getElementById('dynamicFavicon').href = p.img;
+
     // تجميع كل الصور في مصفوفة واحدة
     let allImages = [];
     if (p.img) allImages.push(p.img);
@@ -124,7 +126,7 @@ async function load() {
             <label>العنوان (الولاية، البلدية)</label>
             <input type="text" id="cAddr" placeholder="الولاية، البلدية، الشارع">
           </div>
-          <button class="submit-btn" id="orderBtn" onclick="order('${p.id}', '${p.vendor_id}', ${p.price})">تأكيد الطلب</button>
+          <button class="submit-btn" id="orderBtn" onclick="order('${p.id}', '${p.vendor_id}', ${p.price}, '${p.name?.ar}')">تأكيد الطلب</button>
         </div>
       </div>
     `;
@@ -146,7 +148,7 @@ function changeImage(thumb, url) {
   thumb.classList.add('active');
 }
 
-async function order(pid, vid, price) {
+async function order(pid, vid, price, pName) {
   const name = document.getElementById('cName').value.trim();
   const phone = document.getElementById('cPhone').value.trim();
   const addr = document.getElementById('cAddr').value.trim();
@@ -169,7 +171,7 @@ async function order(pid, vid, price) {
     total_amount: price + 500, // 500 هو سعر الشحن (يمكنك تغييره)
     status: 'pending',
     vendor_id: vid,
-    items: [{ id: pid, qty: 1, price: price }]
+    items: [{ id: pid, name: pName, qty: 1, price: price }]
   }]);
 
   if (error) {
