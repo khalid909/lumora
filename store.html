@@ -20,18 +20,30 @@
   .store-topbar .logo-text img { width: 30px; height: 30px; object-fit: contain; border-radius: 6px; }
 
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(235px,1fr)); gap: 18px; }
-  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; transition: .25s; cursor: pointer; text-decoration: none; color: inherit; display: block; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; transition: .25s; cursor: pointer; }
   .card:hover { box-shadow: var(--shadow); border-color: var(--p); transform: translateY(-2px); }
   .thumb { position: relative; aspect-ratio: 1; background: var(--surface2); }
   .thumb img { width: 100%; height: 100%; object-fit: cover; }
   .card .body { padding: 14px; }
   .card h3 { font-size: 1rem; line-height: 1.35; margin-bottom: 4px; min-height: 2.7em; }
   .price b { font-size: 1.1rem; color: var(--p); }
+
+  /* نافذة المنتج (Modal) */
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px; backdrop-filter: blur(4px); }
+  .modal.active { display: flex; }
+  .modal-content { background: var(--surface); border-radius: 20px; max-width: 800px; width: 100%; display: grid; grid-template-columns: 1fr 1fr; overflow: hidden; position: relative; max-height: 90vh; }
+  .modal-img { background: var(--surface2); width: 100%; height: 100%; object-fit: cover; min-height: 300px; }
+  .modal-body { padding: 30px; display: flex; flex-direction: column; justify-content: center; overflow-y: auto; }
+  .modal-body h2 { font-size: 1.8rem; margin-bottom: 10px; }
+  .modal-body .p-price { font-size: 2rem; font-weight: 800; color: var(--p); margin-bottom: 20px; }
+  .modal-body p { color: var(--muted); line-height: 1.8; margin-bottom: 20px; }
+  .modal-close { position: absolute; top: 15px; left: 15px; background: var(--surface); border: 1px solid var(--line); border-radius: 50%; width: 40px; height: 40px; display: grid; place-items: center; cursor: pointer; z-index: 10; font-size: 1.2rem; }
+  @media(max-width: 768px) { .modal-content { grid-template-columns: 1fr; } .modal-img { height: 250px; } }
 </style>
 </head>
 <body>
 
-<!-- الشريط العلوي للمتجر -->
+<!-- الشريط العلوي -->
 <div class="topbar store-topbar">
   <div class="wrap" style="display:flex; justify-content:space-between; align-items:center;">
     <a href="#" id="topbarBrand" class="logo-text">
@@ -41,20 +53,32 @@
   </div>
 </div>
 
-<!-- هيدر المتجر -->
 <header class="store-header">
   <div class="store-logo" id="storeLogo">S</div>
   <h1 id="storeName">جاري التحميل...</h1>
   <p id="storeDesc">مرحباً بك في متجرنا</p>
 </header>
 
-<!-- شبكة المنتجات -->
 <main class="wrap" style="padding: 40px 0;">
   <h2 style="margin-bottom: 20px; font-size: 1.4rem;">منتجات المتجر</h2>
   <div class="grid" id="productsGrid">
     <p class="muted" style="grid-column:1/-1; text-align:center;">جاري تحميل المنتجات...</p>
   </div>
 </main>
+
+<!-- نافذة تفاصيل المنتج -->
+<div class="modal" id="productModal">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <img class="modal-img" id="modalImg" src="" alt="">
+    <div class="modal-body">
+      <h2 id="modalName"></h2>
+      <div class="p-price" id="modalPrice"></div>
+      <p id="modalDesc">لا يوجد وصف لهذا المنتج.</p>
+      <button class="btn lg block" style="margin-top:auto;">🛒 أضف للسلة</button>
+    </div>
+  </div>
+</div>
 
 <script>
 const sb = window.supabase.createClient(
@@ -63,74 +87,166 @@ const sb = window.supabase.createClient(
 );
 const fmt = n => new Intl.NumberFormat('ar-DZ', { style: 'currency', currency: 'DZD', minimumFractionDigits: 0 }).format(n || 0);
 
-async function loadStore() {
+let currentProduct = null;
+let currentQty = 1;
+const SHIPPING_FEE = 500;
+
+async function loadProduct() {
   const params = new URLSearchParams(window.location.search);
-  const slug = params.get('slug');
+  const id = params.get('id');
   
-  if (!slug) {
-    document.getElementById('storeName').textContent = 'خطأ: رابط المتجر غير صالح';
+  if (!id) {
+    document.getElementById('productContainer').innerHTML = '<p class="muted" style="text-align:center; grid-column:1/-1;">خطأ: رابط المنتج غير صالح.</p>';
     return;
   }
 
-  // 1. جلب بيانات المتجر
-  const { data: vendor, error: vErr } = await sb.from('vendors').select('*').eq('store_slug', slug).maybeSingle();
-  if (vErr || !vendor) {
-    document.getElementById('storeName').textContent = 'المتجر غير موجود';
+  // جلب المنتج من قاعدة البيانات
+  const { data: product, error } = await sb.from('products').select('*').eq('id', id).maybeSingle();
+  
+  if (error) {
+    document.getElementById('productContainer').innerHTML = `<p class="muted" style="text-align:center; grid-column:1/-1;">حدث خطأ في قاعدة البيانات: ${error.message}</p>`;
     return;
   }
-
-  // 2. تحديث البيانات في الصفحة
-  document.title = vendor.store_name + ' — Lumora';
   
-  // تحديث الشريط العلوي
-  document.getElementById('topbarName').textContent = vendor.store_name;
-  const topbarBrand = document.getElementById('topbarBrand');
-  if (vendor.store_logo) {
-    topbarBrand.innerHTML = `<img src="${vendor.store_logo}" alt=""> <span>${vendor.store_name}</span>`;
-  } else {
-    topbarBrand.innerHTML = `<span>${vendor.store_name}</span>`;
-  }
-
-  // تحديث الهيدر الرئيسي
-  document.getElementById('storeName').textContent = vendor.store_name;
-  if(vendor.store_description) document.getElementById('storeDesc').textContent = vendor.store_description;
-
-  const logoEl = document.getElementById('storeLogo');
-  const faviconEl = document.getElementById('dynamicFavicon');
-  
-  if (vendor.store_logo) {
-    logoEl.innerHTML = `<img src="${vendor.store_logo}" alt="${vendor.store_name}">`;
-    faviconEl.href = vendor.store_logo;
-  } else {
-    logoEl.textContent = vendor.store_name.charAt(0).toUpperCase();
-  }
-
-  // 3. جلب منتجات المتجر
-  const { data: products, error: pErr } = await sb.from('products').select('*').eq('vendor_id', vendor.id);
-  const grid = document.getElementById('productsGrid');
-
-  if (pErr || !products || products.length === 0) {
-    grid.innerHTML = '<p class="muted" style="grid-column:1/-1; text-align:center; padding:40px;">هذا المتجر لم يقم بإضافة أي منتجات بعد.</p>';
+  if (!product) {
+    document.getElementById('productContainer').innerHTML = '<p class="muted" style="text-align:center; grid-column:1/-1;">عذراً، هذا المنتج غير موجود أو تم حذفه.</p>';
     return;
   }
+  
+  currentProduct = product;
+  
+  if (product.img) document.getElementById('dynamicFavicon').href = product.img;
 
-  // 4. عرض المنتجات وربطها بصفحة product.html
-  grid.innerHTML = products.map(p => `
-    <a class="card" href="product.html?id=${p.id}">
-      <div class="thumb">
-        ${p.img ? `<img src="${p.img}" alt="${p.name?.ar || 'منتج'}">` : `<div style="width:100%; height:100%; display:grid; place-items:center; font-size:3rem; background:var(--surface2);">📦</div>`}
+  document.getElementById('productContainer').innerHTML = `
+    <!-- الصورة -->
+    <div class="product-image">
+      <div class="badge-offer">عرض خاص: الدفع عند الاستلام</div>
+      ${product.img 
+        ? `<img src="${product.img}" alt="${product.name?.ar}">` 
+        : `<div style="width:100%; aspect-ratio:1; display:grid; place-items:center; font-size:6rem;">📦</div>`}
+    </div>
+
+    <!-- التفاصيل -->
+    <div class="product-info">
+      <h1>${product.name?.ar || 'منتج'}</h1>
+      
+      <div class="price-box">
+        <span class="price">${fmt(product.price)}</span>
       </div>
-      <div class="body">
-        <h3>${p.name?.ar || 'منتج'}</h3>
-        <div class="price">
-          <b>${fmt(p.price)}</b>
+
+      <ul class="features-list">
+        <li>${product.description?.ar || 'منتج عالي الجودة يناسب احتياجاتك اليومية.'}</li>
+        <li>متوفر الآن في المخزون (${product.stock} قطعة)</li>
+        <li>الدفع عند الاستلام — اطلب الآن ويوصلك وين حبيت</li>
+      </ul>
+
+      <!-- نموذج الطلب -->
+      <div class="order-form">
+        <h3>🛒 اطلب الآن</h3>
+        
+        <div class="form-group">
+          <label>اللون</label>
+          <div class="color-options">
+            <button class="color-btn active" style="background:#000;"></button>
+            <button class="color-btn" style="background:#c19a6b;"></button>
+            <button class="color-btn" style="background:#1e3a8a;"></button>
+            <button class="color-btn" style="background:#dc2626;"></button>
+          </div>
         </div>
+
+        <div class="form-group">
+          <label>الكمية</label>
+          <div class="qty-box">
+            <button onclick="updateQty(-1)">−</button>
+            <input type="number" id="qtyInput" value="1" min="1" max="${product.stock}" readonly>
+            <button onclick="updateQty(1)">+</button>
+          </div>
+        </div>
+
+        <h3 style="margin-top:20px; font-size:1.1rem;">معلومات الزبون</h3>
+        <div class="form-group">
+          <label>الاسم الكامل</label>
+          <input type="text" id="custName" placeholder="الاسم واللقب">
+        </div>
+        <div class="form-group">
+          <label>رقم الهاتف</label>
+          <input type="tel" id="custPhone" placeholder="05xxxxxxxx" dir="ltr">
+        </div>
+        <div class="form-group">
+          <label>العنوان (الولاية والبلدية)</label>
+          <input type="text" id="custAddress" placeholder="مثال: الجزائر العاصمة، بئر مراد رايس">
+        </div>
+
+        <div class="summary">
+          <div class="summary-row">
+            <span>سعر المنتج (1x)</span>
+            <span id="sumSubtotal">${fmt(product.price)}</span>
+          </div>
+          <div class="summary-row">
+            <span>سعر الشحن</span>
+            <span id="sumShipping">${fmt(SHIPPING_FEE)}</span>
+          </div>
+          <div class="summary-row total">
+            <span>الإجمالي المتوقع</span>
+            <span id="sumTotal">${fmt(product.price + SHIPPING_FEE)}</span>
+          </div>
+        </div>
+
+        <button class="btn submit-btn" onclick="submitOrder()">اطلب الآن (الدفع عند الاستلام)</button>
       </div>
-    </a>
-  `).join('');
+    </div>
+  `;
 }
 
-loadStore();
+function updateQty(change) {
+  const input = document.getElementById('qtyInput');
+  let val = parseInt(input.value) + change;
+  if (val < 1) val = 1;
+  if (val > currentProduct.stock) val = currentProduct.stock;
+  input.value = val;
+  currentQty = val;
+  
+  const subtotal = currentProduct.price * val;
+  document.getElementById('sumSubtotal').textContent = fmt(subtotal);
+  document.getElementById('sumTotal').textContent = fmt(subtotal + SHIPPING_FEE);
+}
+
+async function submitOrder() {
+  const name = document.getElementById('custName').value.trim();
+  const phone = document.getElementById('custPhone').value.trim();
+  const address = document.getElementById('custAddress').value.trim();
+
+  if (!name || !phone || !address) {
+    alert('الرجاء ملء جميع معلومات الزبون (الاسم، الهاتف، العنوان).');
+    return;
+  }
+
+  const orderId = 'ORD' + Math.floor(Math.random() * 1000000);
+  const total = (currentProduct.price * currentQty) + SHIPPING_FEE;
+
+  const { error } = await sb.from('orders').insert([{
+    id: orderId,
+    customer_name: name,
+    phone: phone,
+    city: 'غير محدد', 
+    address: address,
+    notes: 'الكمية: ' + currentQty,
+    total_amount: total,
+    status: 'pending',
+    vendor_id: currentProduct.vendor_id,
+    items: [{ id: currentProduct.id, name: currentProduct.name?.ar, qty: currentQty, price: currentProduct.price }]
+  }]);
+
+  if (error) {
+    alert('حدث خطأ أثناء حفظ الطلب: ' + error.message);
+    return;
+  }
+
+  alert('🎉 تم استلام طلبك بنجاح! سنتصل بك قريباً للتأكيد.');
+  window.location.href = 'index.html'; // العودة للرئيسية بعد الطلب
+}
+
+loadProduct();
 </script>
 </body>
 </html>
