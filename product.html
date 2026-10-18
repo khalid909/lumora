@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>تفاصيل المنتج — Lumora</title>
+<link rel="icon" id="dynamicFavicon" href="icon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  .product-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; padding: 40px 0; }
+  @media(max-width: 768px) { .product-wrap { grid-template-columns: 1fr; gap: 20px; } }
+  
+  .product-image { width: 100%; border-radius: 20px; overflow: hidden; background: var(--surface2); border: 1px solid var(--line); }
+  .product-image img { width: 100%; height: 100%; object-fit: cover; aspect-ratio: 1; }
+  
+  .product-info h1 { font-size: 2.2rem; margin-bottom: 10px; }
+  .product-price { font-size: 2rem; font-weight: 800; color: var(--p); margin-bottom: 20px; }
+  .product-desc { font-size: 1.05rem; line-height: 1.8; color: var(--muted); margin-bottom: 30px; padding-bottom: 30px; border-bottom: 1px solid var(--line); }
+  
+  .store-mini { display: flex; align-items: center; gap: 10px; padding: 12px; background: var(--surface2); border-radius: 12px; margin-bottom: 30px; text-decoration: none; color: inherit; }
+  .store-mini img { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; }
+  .store-mini .s-logo { width: 40px; height: 40px; border-radius: 8px; background: var(--grad); color: #fff; display: grid; place-items: center; font-weight: 800; }
+  .store-mini b { display: block; }
+  .store-mini small { color: var(--p); font-weight: 700; }
+  
+  .add-btn { padding: 16px 24px; font-size: 1.1rem; border-radius: 12px; width: 100%; }
+</style>
+</head>
+<body>
+
+<div class="topbar store-topbar" style="background:var(--surface); border-bottom:1px solid var(--line); padding:12px;">
+  <div class="wrap" style="display:flex; justify-content:space-between; align-items:center;">
+    <a href="index.html" class="logo-text" style="font-weight:800; text-decoration:none; color:inherit; display:flex; align-items:center; gap:8px;">
+      <img src="icon.svg" width="24" height="24" alt=""> Lumora
+    </a>
+    <a href="javascript:history.back()" class="btn sm ghost">← العودة</a>
+  </div>
+</div>
+
+<main class="wrap">
+  <div class="product-wrap" id="productContainer">
+    <p class="muted">جاري تحميل تفاصيل المنتج...</p>
+  </div>
+</main>
+
+<script>
+const sb = window.supabase.createClient(
+  'https://mpoqvpqeysgoqjtcwtfk.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1wb3F2cHFleXNnb3FqdGN3dGZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0ODE1NTUsImV4cCI6MjEwNzA1NzU1NX0.i0YEZkxAmy4wEnX0QP8Hm2erm1bxPFmO6sp78clevb0'
+);
+const fmt = n => new Intl.NumberFormat('ar-DZ', { style: 'currency', currency: 'DZD', minimumFractionDigits: 0 }).format(n || 0);
+
+async function loadProduct() {
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get('id');
+
+  if (!id) {
+    document.getElementById('productContainer').innerHTML = '<p class="muted">خطأ: لم يتم تحديد المنتج.</p>';
+    return;
+  }
+
+  // جلب المنتج
+  const { data: product, error: pErr } = await sb.from('products').select('*').eq('id', id).maybeSingle();
+  if (pErr || !product) {
+    document.getElementById('productContainer').innerHTML = '<p class="muted">المنتج غير موجود.</p>';
+    return;
+  }
+
+  // جلب المتجر التابع له
+  const { data: vendor } = await sb.from('vendors').select('*').eq('id', product.vendor_id).maybeSingle();
+  if (vendor) {
+    document.title = product.name?.ar + ' - ' + vendor.store_name;
+    if (vendor.store_logo) document.getElementById('dynamicFavicon').href = vendor.store_logo;
+  }
+
+  // بناء صفحة المنتج
+  const storeHtml = vendor ? `
+    <a href="store.html?slug=${vendor.store_slug}" class="store-mini">
+      ${vendor.store_logo ? `<img src="${vendor.store_logo}" alt="">` : `<div class="s-logo">${vendor.store_name.charAt(0)}</div>`}
+      <div>
+        <b>${vendor.store_name}</b>
+        <small>زيارة المتجر ←</small>
+      </div>
+    </a>
+  ` : '';
+
+  document.getElementById('productContainer').innerHTML = `
+    <div class="product-image">
+      ${product.img 
+        ? `<img src="${product.img}" alt="${product.name?.ar}">` 
+        : `<div style="width:100%; aspect-ratio:1; display:grid; place-items:center; font-size:6rem; color:var(--muted);">📦</div>`}
+    </div>
+    <div class="product-info">
+      ${storeHtml}
+      <h1>${product.name?.ar || 'منتج'}</h1>
+      <div class="product-price">${fmt(product.price)}</div>
+      <div class="product-desc">
+        ${product.description?.ar || 'لا يوجد وصف تفصيلي لهذا المنتج.'}
+      </div>
+      
+      <div style="display:flex; gap:10px; align-items:center; margin-bottom:20px;">
+        <label style="font-weight:bold;">الكمية:</label>
+        <input type="number" id="qty" value="1" min="1" max="${product.stock}" style="width:80px; padding:10px; border:1px solid var(--line); border-radius:8px; text-align:center;">
+        <span class="muted" style="font-size:0.9rem;">(متوفر ${product.stock} قطعة)</span>
+      </div>
+
+      <button class="btn add-btn" onclick="alert('سيتم ربط السلة قريباً!')">
+        🛒 أضف إلى السلة
+      </button>
+    </div>
+  `;
+}
+
+loadProduct();
+</script>
+</body>
+</html>
