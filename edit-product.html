@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>تعديل المنتج — Lumora</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/admin.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  body { background: var(--bg); padding: 40px 20px; display: flex; justify-content: center; }
+  .edit-container { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; width: 100%; max-width: 800px; padding: 30px; box-shadow: var(--shadow); }
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+  .header h1 { font-size: 1.5rem; margin: 0; }
+  
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media(max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+  
+  .form-group { display: flex; flex-direction: column; gap: 8px; }
+  .form-group label { font-weight: 700; font-size: 0.95rem; }
+  .form-group input, .form-group select, .form-group textarea { 
+    padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface2); font-size: 1rem; outline: none; transition: 0.2s;
+  }
+  .form-group input:focus, .form-group textarea:focus { border-color: var(--p); box-shadow: 0 0 0 3px rgba(109,74,255,0.1); }
+  
+  .image-upload-box { 
+    border: 2px dashed var(--line); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: 0.2s; position: relative; overflow: hidden;
+  }
+  .image-upload-box:hover { border-color: var(--p); background: var(--surface2); }
+  .image-upload-box img { max-width: 100%; max-height: 200px; object-fit: contain; border-radius: 8px; margin: 0 auto; display: block; }
+  .image-upload-box input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+  .actions { display: flex; gap: 12px; margin-top: 30px; justify-content: flex-end; }
+</style>
+</head>
+<body>
+
+<div class="edit-container">
+  <div class="header">
+    <h1>✏️ تعديل المنتج</h1>
+    <a href="vendor.html" class="btn ghost sm">← العودة للوحة التحكم</a>
+  </div>
+
+  <form id="editForm" class="form-grid">
+    <input type="hidden" id="prodId" name="id">
+    
+    <div class="form-group" style="grid-column: 1/-1;">
+      <label>اسم المنتج *</label>
+      <input type="text" id="prodName" name="name" required>
+    </div>
+
+    <div class="form-group">
+      <label>السعر (دج) *</label>
+      <input type="number" id="prodPrice" name="price" required min="0">
+    </div>
+
+    <div class="form-group">
+      <label>المخزون *</label>
+      <input type="number" id="prodStock" name="stock" required min="0">
+    </div>
+
+    <div class="form-group">
+      <label>الفئة</label>
+      <select id="prodCat" name="cat">
+        <option value="fashion">أزياء</option>
+        <option value="tech">إلكترونيات</option>
+        <option value="home">المنزل</option>
+        <option value="beauty">جمال</option>
+        <option value="sport">رياضة</option>
+      </select>
+    </div>
+
+    <div class="form-group" style="grid-column: 1/-1;">
+      <label>صورة المنتج (اضغط لتغيير الصورة)</label>
+      <div class="image-upload-box" id="imageBox">
+        <img id="imgPreview" src="" style="display: none;">
+        <div id="imgPlaceholder">
+          <div style="font-size: 2rem; margin-bottom: 8px;">📸</div>
+          <span class="muted">اضغط هنا لرفع صورة من جهازك</span>
+        </div>
+        <input type="file" id="imgFile" accept="image/*">
+      </div>
+    </div>
+
+    <div class="form-group" style="grid-column: 1/-1;">
+      <label>الوصف</label>
+      <textarea id="prodDesc" name="desc" rows="3" placeholder="وصف تفصيلي للمنتج..."></textarea>
+    </div>
+
+    <p class="err" id="editErr" hidden style="grid-column: 1/-1; color: red; text-align: center;"></p>
+
+    <div class="actions" style="grid-column: 1/-1;">
+      <button type="submit" class="btn" id="saveBtn" style="flex: 1;">💾 حفظ التعديلات</button>
+      <a href="vendor.html" class="btn ghost">إلغاء</a>
+    </div>
+  </form>
+</div>
+
+<script>
+const sb = window.supabase.createClient(
+  'https://mpoqvpqeysgoqjtcwtfk.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1wb3F2cHFleXNnb3FqdGN3dGZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0ODE1NTUsImV4cCI6MjEwNzA1NzU1NX0.i0YEZkxAmy4wEnX0QP8Hm2erm1bxPFmO6sp78clevb0'
+);
+
+let currentImageUrl = '';
+
+// جلب بيانات المنتج عند فتح الصفحة
+async function loadProduct() {
+  const id = new URLSearchParams(window.location.search).get('id');
+  if (!id) { 
+    alert('لم يتم تحديد المنتج'); 
+    window.location.href = 'vendor.html'; 
+    return; 
+  }
+
+  const { data: p, error } = await sb.from('products').select('*').eq('id', id).single();
+  if (error || !p) {
+    alert('المنتج غير موجود');
+    window.location.href = 'vendor.html';
+    return;
+  }
+
+  // تعبئة الحقول
+  document.getElementById('prodId').value = p.id;
+  document.getElementById('prodName').value = p.name?.ar || '';
+  document.getElementById('prodPrice').value = p.price;
+  document.getElementById('prodStock').value = p.stock;
+  document.getElementById('prodCat').value = p.cat || 'fashion';
+  document.getElementById('prodDesc').value = p.description?.ar || '';
+  
+  if (p.img) {
+    currentImageUrl = p.img;
+    document.getElementById('imgPreview').src = p.img;
+    document.getElementById('imgPreview').style.display = 'block';
+    document.getElementById('imgPlaceholder').style.display = 'none';
+  }
+}
+
+// معاينة الصورة عند اختيارها
+document.getElementById('imgFile').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById('imgPreview').src = e.target.result;
+      document.getElementById('imgPreview').style.display = 'block';
+      document.getElementById('imgPlaceholder').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+// حفظ التعديلات
+document.getElementById('editForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('saveBtn');
+  const err = document.getElementById('editErr');
+  err.hidden = true;
+  btn.disabled = true; btn.textContent = 'جارٍ الحفظ...';
+
+  const id = document.getElementById('prodId').value;
+  const file = document.getElementById('imgFile').files[0];
+  let finalImageUrl = currentImageUrl;
+
+  // رفع الصورة الجديدة إذا تم اختيارها
+  if (file) {
+    const fileName = `prod-${Date.now()}.${file.name.split('.').pop()}`;
+    const { error: uploadError } = await sb.storage.from('vendor-assets').upload(fileName, file);
+    if (uploadError) {
+      err.textContent = 'فشل رفع الصورة: ' + uploadError.message; err.hidden = false;
+      btn.disabled = false; btn.textContent = '💾 حفظ التعديلات';
+      return;
+    }
+    const { data } = sb.storage.from('vendor-assets').getPublicUrl(fileName);
+    finalImageUrl = data.publicUrl;
+  }
+
+  const updates = {
+    name: { ar: document.getElementById('prodName').value, fr: document.getElementById('prodName').value, en: document.getElementById('prodName').value },
+    price: Number(document.getElementById('prodPrice').value),
+    stock: Number(document.getElementById('prodStock').value),
+    cat: document.getElementById('prodCat').value,
+    description: { ar: document.getElementById('prodDesc').value, fr: '', en: '' },
+    img: finalImageUrl
+  };
+
+  const { error: updateError } = await sb.from('products').update(updates).eq('id', id);
+
+  btn.disabled = false; btn.textContent = '💾 حفظ التعديلات';
+
+  if (updateError) {
+    err.textContent = updateError.message; err.hidden = false;
+  } else {
+    alert('تم حفظ التعديلات بنجاح!');
+    window.location.href = 'vendor.html';
+  }
+});
+
+loadProduct();
+</script>
+</body>
+</html>
