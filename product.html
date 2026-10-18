@@ -21,15 +21,18 @@
   .form-group { margin-bottom: 15px; }
   .form-group label { display: block; font-weight: 700; margin-bottom: 8px; font-size: 0.9rem; }
   .form-group input { width: 100%; padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface2); font-size: 1rem; outline: none; }
-  .submit-btn { width: 100%; padding: 18px; font-size: 1.2rem; border-radius: 12px; margin-top: 10px; cursor: pointer; border: none; color: white; background: var(--grad); font-weight: bold; }
-  .submit-btn:disabled { opacity: 0.5; }
+  .submit-btn { width: 100%; padding: 18px; font-size: 1.2rem; border-radius: 12px; margin-top: 10px; cursor: pointer; border: none; color: white; background: var(--grad); font-weight: bold; transition: 0.3s; }
+  .submit-btn:hover { opacity: 0.9; }
+  .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 </style>
 </head>
 <body>
 
 <div style="background:var(--surface); border-bottom:1px solid var(--line); padding:12px; position:sticky; top:0; z-index:50;">
   <div style="max-width:1000px; margin:0 auto; display:flex; justify-content:space-between; align-items:center;">
-    <a href="index.html" style="font-weight:800; text-decoration:none; color:inherit; display:flex; align-items:center; gap:8px;"><img src="icon.svg" width="24" height="24" alt=""> Lumora</a>
+    <a href="index.html" style="font-weight:800; text-decoration:none; color:inherit; display:flex; align-items:center; gap:8px;">
+      <img src="icon.svg" width="24" height="24" alt=""> Lumora
+    </a>
     <a href="javascript:history.back()" class="btn sm ghost">← العودة</a>
   </div>
 </div>
@@ -59,6 +62,12 @@ async function load() {
     if (error) throw error;
     if (!p) throw new Error("المنتج غير موجود");
 
+    // إذا كان للمنتج صورة، اجعلها أيقونة للمتصفح
+    if (p.img) {
+      const favicon = document.querySelector('link[rel="icon"]');
+      if (favicon) favicon.href = p.img;
+    }
+
     app.innerHTML = `
       <div>
         <div class="main-image">
@@ -68,7 +77,7 @@ async function load() {
       <div class="info-box">
         <h1>${p.name?.ar || 'منتج'}</h1>
         <div class="price">${fmt(p.price)}</div>
-        <div class="desc">${p.description?.ar || 'لا يوجد وصف تفصيلي.'}</div>
+        <div class="desc">${p.description?.ar || 'لا يوجد وصف تفصيلي لهذا المنتج.'}</div>
         
         <div class="form-box">
           <h3>اطلب الآن (الدفع عند الاستلام)</h3>
@@ -107,12 +116,12 @@ async function submitOrder(pid) {
   btn.disabled = true;
   btn.textContent = 'جاري تأكيد الطلب...';
 
-  // استدعاء دالة SQL الآمنة بدلاً من الإدخال المباشر
+  // إرسال المنتج كـ JSON إلى دالة SQL الآمنة
   const { data: orderId, error } = await sb.rpc('create_order', {
     p_customer_name: name,
     p_customer_phone: phone,
     p_customer_address: addr,
-    p_items: [{ product_id: pid, qty: 1 }]
+    p_items: [{ product_id: parseInt(pid), qty: 1 }]
   });
 
   btn.disabled = false;
