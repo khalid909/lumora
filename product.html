@@ -11,13 +11,9 @@
 <style>
   .product-wrapper { max-width: 1000px; margin: 40px auto; padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
   @media (max-width: 768px) { .product-wrapper { grid-template-columns: 1fr; gap: 20px; } }
-  .gallery-container { display: flex; flex-direction: column; gap: 12px; }
   .main-image { background: var(--surface2); border-radius: 20px; overflow: hidden; border: 1px solid var(--line); aspect-ratio: 1; display: flex; align-items: center; justify-content: center; }
   .main-image img { width: 100%; height: 100%; object-fit: cover; }
-  .thumbnails { display: flex; gap: 10px; overflow-x: auto; }
-  .thumbnails img { width: 70px; height: 70px; object-fit: cover; border-radius: 10px; border: 2px solid transparent; cursor: pointer; }
-  .thumbnails img:hover, .thumbnails img.active { border-color: var(--p); }
-  .info-box h1 { font-size: 2rem; margin-bottom: 10px; }
+  .info-box h1 { font-size: 2rem; margin-bottom: 10px; line-height: 1.3; }
   .price { font-size: 2.2rem; font-weight: 800; color: var(--p); margin-bottom: 20px; }
   .desc { color: var(--muted); line-height: 1.8; margin-bottom: 30px; }
   .form-box { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 24px; }
@@ -33,9 +29,7 @@
 
 <div style="background:var(--surface); border-bottom:1px solid var(--line); padding:12px; position:sticky; top:0; z-index:50;">
   <div style="max-width:1000px; margin:0 auto; display:flex; justify-content:space-between; align-items:center;">
-    <a href="index.html" style="font-weight:800; text-decoration:none; color:inherit; display:flex; align-items:center; gap:8px;">
-      <img src="icon.svg" width="24" height="24" alt=""> Lumora
-    </a>
+    <a href="index.html" style="font-weight:800; text-decoration:none; color:inherit; display:flex; align-items:center; gap:8px;"><img src="icon.svg" width="24" height="24" alt=""> Lumora</a>
     <a href="javascript:history.back()" class="btn sm ghost">← العودة</a>
   </div>
 </div>
@@ -66,7 +60,7 @@ async function load() {
     if (!p) throw new Error("المنتج غير موجود");
 
     app.innerHTML = `
-      <div class="gallery-container">
+      <div>
         <div class="main-image">
           ${p.img ? `<img src="${p.img}" alt="${p.name?.ar}">` : `<div style="font-size:6rem;">📦</div>`}
         </div>
@@ -74,7 +68,7 @@ async function load() {
       <div class="info-box">
         <h1>${p.name?.ar || 'منتج'}</h1>
         <div class="price">${fmt(p.price)}</div>
-        <div class="desc">${p.description?.ar || 'لا يوجد وصف.'}</div>
+        <div class="desc">${p.description?.ar || 'لا يوجد وصف تفصيلي.'}</div>
         
         <div class="form-box">
           <h3>اطلب الآن (الدفع عند الاستلام)</h3>
@@ -90,7 +84,7 @@ async function load() {
             <label>العنوان</label>
             <input type="text" id="cAddr" placeholder="الولاية، البلدية، الشارع">
           </div>
-          <button class="submit-btn" id="orderBtn" onclick="submitOrder('${p.id}', '${p.vendor_id}', ${p.price})">تأكيد الطلب</button>
+          <button class="submit-btn" id="orderBtn" onclick="submitOrder('${p.id}')">تأكيد الطلب</button>
         </div>
       </div>
     `;
@@ -99,7 +93,7 @@ async function load() {
   }
 }
 
-async function submitOrder(pid, vid, price) {
+async function submitOrder(pid) {
   const name = document.getElementById('cName').value.trim();
   const phone = document.getElementById('cPhone').value.trim();
   const addr = document.getElementById('cAddr').value.trim();
@@ -113,25 +107,21 @@ async function submitOrder(pid, vid, price) {
   btn.disabled = true;
   btn.textContent = 'جاري تأكيد الطلب...';
 
-  // حفظ الطلب مع ربطه بـ vendor_id
-  const { error } = await sb.from('orders').insert([{
-    id: 'ORD' + Date.now(),
-    customer_name: name,
-    phone: phone,
-    city: 'غير محدد',
-    address: addr,
-    total_amount: price, 
-    status: 'pending',
-    vendor_id: vid ? String(vid) : null,
-    notes: 'طلب جديد من المنتج رقم ' + pid
-  }]);
+  // استدعاء دالة SQL الآمنة بدلاً من الإدخال المباشر
+  const { data: orderId, error } = await sb.rpc('create_order', {
+    p_customer_name: name,
+    p_customer_phone: phone,
+    p_customer_address: addr,
+    p_items: [{ product_id: pid, qty: 1 }]
+  });
+
+  btn.disabled = false;
+  btn.textContent = 'تأكيد الطلب';
 
   if (error) {
-    alert('خطأ في النظام: ' + error.message);
-    btn.disabled = false;
-    btn.textContent = 'تأكيد الطلب';
+    alert('عذراً، حدث خطأ أثناء حفظ الطلب:\n' + error.message);
   } else {
-    alert('🎉 تم استلام طلبك بنجاح! سنتصل بك قريباً للتأكيد.');
+    alert(`🎉 تم استلام طلبك بنجاح!\nرقم الطلب الخاص بك هو: ${orderId}\nسنتصل بك قريباً للتأكيد.`);
     window.location.href = 'index.html';
   }
 }
