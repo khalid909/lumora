@@ -235,7 +235,7 @@ async function loadProducts() {
       <td>${fmt(p.price)}</td>
       <td>${p.stock}</td>
       <td>
-        <button class="btn ghost sm" onclick="openEditModal('${p.id}', '${p.name?.ar}', ${p.price}, ${p.stock})">✏️</button>
+        <a href="edit-product.html?id=${p.id}" class="btn ghost sm">✏️</a>
         <button class="btn danger sm" onclick="deleteProduct('${p.id}')">🗑️</button>
       </td>
     </tr>`).join('')}
