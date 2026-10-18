@@ -12,8 +12,6 @@
   body { background: var(--bg); padding: 40px 20px; display: flex; justify-content: center; }
   .edit-container { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; width: 100%; max-width: 800px; padding: 30px; box-shadow: var(--shadow); }
   .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
-  .header h1 { font-size: 1.5rem; margin: 0; }
-  
   .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   @media(max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
   
@@ -22,15 +20,16 @@
   .form-group input, .form-group select, .form-group textarea { 
     padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface2); font-size: 1rem; outline: none; transition: 0.2s;
   }
-  .form-group input:focus, .form-group textarea:focus { border-color: var(--p); box-shadow: 0 0 0 3px rgba(109,74,255,0.1); }
   
-  .image-upload-box { 
-    border: 2px dashed var(--line); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: 0.2s; position: relative; overflow: hidden;
-  }
-  .image-upload-box:hover { border-color: var(--p); background: var(--surface2); }
-  .image-upload-box img { max-width: 100%; max-height: 200px; object-fit: contain; border-radius: 8px; margin: 0 auto; display: block; }
-  .image-upload-box input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-
+  /* معرض الصور */
+  .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 10px; }
+  .gallery-item { position: relative; aspect-ratio: 1; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); }
+  .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
+  .del-img-btn { position: absolute; top: 4px; right: 4px; background: rgba(255,0,0,0.8); color: #fff; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: grid; place-items: center; font-size: 12px; }
+  .upload-box { border: 2px dashed var(--line); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: 0.2s; }
+  .upload-box:hover { border-color: var(--p); background: var(--surface2); }
+  .upload-box input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  
   .actions { display: flex; gap: 12px; margin-top: 30px; justify-content: flex-end; }
 </style>
 </head>
@@ -60,26 +59,17 @@
       <input type="number" id="prodStock" name="stock" required min="0">
     </div>
 
-    <div class="form-group">
-      <label>الفئة</label>
-      <select id="prodCat" name="cat">
-        <option value="fashion">أزياء</option>
-        <option value="tech">إلكترونيات</option>
-        <option value="home">المنزل</option>
-        <option value="beauty">جمال</option>
-        <option value="sport">رياضة</option>
-      </select>
-    </div>
-
     <div class="form-group" style="grid-column: 1/-1;">
-      <label>صورة المنتج (اضغط لتغيير الصورة)</label>
-      <div class="image-upload-box" id="imageBox">
-        <img id="imgPreview" src="" style="display: none;">
-        <div id="imgPlaceholder">
-          <div style="font-size: 2rem; margin-bottom: 8px;">📸</div>
-          <span class="muted">اضغط هنا لرفع صورة من جهازك</span>
-        </div>
-        <input type="file" id="imgFile" accept="image/*">
+      <label>صور المنتج (يمكنك إضافة أو حذف الصور)</label>
+      
+      <!-- معرض الصور الحالية -->
+      <div class="gallery-grid" id="galleryGrid"></div>
+
+      <!-- زر إضافة صور جديدة -->
+      <div class="upload-box" style="position: relative; margin-top: 10px;">
+        <div style="font-size: 1.5rem; margin-bottom: 5px;">📸</div>
+        <span class="muted">اضغط لاختيار صور جديدة (الحد الأقصى 10 صور)</span>
+        <input type="file" id="newImages" accept="image/*" multiple>
       </div>
     </div>
 
@@ -103,55 +93,49 @@ const sb = window.supabase.createClient(
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1wb3F2cHFleXNnb3FqdGN3dGZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0ODE1NTUsImV4cCI6MjEwNzA1NzU1NX0.i0YEZkxAmy4wEnX0QP8Hm2erm1bxPFmO6sp78clevb0'
 );
 
-let currentImageUrl = '';
+let currentImages = []; // مصفوفة لحفظ روابط الصور الحالية
 
-// جلب بيانات المنتج عند فتح الصفحة
 async function loadProduct() {
   const id = new URLSearchParams(window.location.search).get('id');
-  if (!id) { 
-    alert('لم يتم تحديد المنتج'); 
-    window.location.href = 'vendor.html'; 
-    return; 
-  }
+  if (!id) return window.location.href = 'vendor.html';
 
-  const { data: p, error } = await sb.from('products').select('*').eq('id', id).single();
-  if (error || !p) {
-    alert('المنتج غير موجود');
-    window.location.href = 'vendor.html';
-    return;
-  }
+  const { data: p } = await sb.from('products').select('*').eq('id', id).single();
+  if (!p) return window.location.href = 'vendor.html';
 
-  // تعبئة الحقول
   document.getElementById('prodId').value = p.id;
   document.getElementById('prodName').value = p.name?.ar || '';
   document.getElementById('prodPrice').value = p.price;
   document.getElementById('prodStock').value = p.stock;
-  document.getElementById('prodCat').value = p.cat || 'fashion';
   document.getElementById('prodDesc').value = p.description?.ar || '';
   
-  if (p.img) {
-    currentImageUrl = p.img;
-    document.getElementById('imgPreview').src = p.img;
-    document.getElementById('imgPreview').style.display = 'block';
-    document.getElementById('imgPlaceholder').style.display = 'none';
+  // تجميع الصور (الصورة الرئيسية + معرض الصور)
+  currentImages = [];
+  if (p.img) currentImages.push(p.img);
+  if (p.gallery && Array.isArray(p.gallery)) {
+    p.gallery.forEach(img => {
+      if (img !== p.img && !currentImages.includes(img)) currentImages.push(img);
+    });
   }
+  
+  renderGallery();
 }
 
-// معاينة الصورة عند اختيارها
-document.getElementById('imgFile').addEventListener('change', function(e) {
-  const file = e.target.files[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      document.getElementById('imgPreview').src = e.target.result;
-      document.getElementById('imgPreview').style.display = 'block';
-      document.getElementById('imgPlaceholder').style.display = 'none';
-    };
-    reader.readAsDataURL(file);
-  }
-});
+function renderGallery() {
+  const grid = document.getElementById('galleryGrid');
+  grid.innerHTML = currentImages.map((url, index) => `
+    <div class="gallery-item">
+      <img src="${url}" alt="صورة ${index + 1}">
+      ${index === 0 ? '<span style="position:absolute; bottom:4px; left:4px; background:var(--p); color:#fff; font-size:10px; padding:2px 6px; border-radius:4px;">رئيسية</span>' : ''}
+      <button type="button" class="del-img-btn" onclick="removeImage(${index})">✕</button>
+    </div>
+  `).join('');
+}
 
-// حفظ التعديلات
+function removeImage(index) {
+  currentImages.splice(index, 1);
+  renderGallery();
+}
+
 document.getElementById('editForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const btn = document.getElementById('saveBtn');
@@ -160,29 +144,38 @@ document.getElementById('editForm').addEventListener('submit', async (e) => {
   btn.disabled = true; btn.textContent = 'جارٍ الحفظ...';
 
   const id = document.getElementById('prodId').value;
-  const file = document.getElementById('imgFile').files[0];
-  let finalImageUrl = currentImageUrl;
+  const files = document.getElementById('newImages').files;
 
-  // رفع الصورة الجديدة إذا تم اختيارها
-  if (file) {
-    const fileName = `prod-${Date.now()}.${file.name.split('.').pop()}`;
-    const { error: uploadError } = await sb.storage.from('vendor-assets').upload(fileName, file);
-    if (uploadError) {
-      err.textContent = 'فشل رفع الصورة: ' + uploadError.message; err.hidden = false;
-      btn.disabled = false; btn.textContent = '💾 حفظ التعديلات';
-      return;
-    }
-    const { data } = sb.storage.from('vendor-assets').getPublicUrl(fileName);
-    finalImageUrl = data.publicUrl;
+  // التحقق من عدد الصور
+  if (currentImages.length + files.length > 10) {
+    err.textContent = 'الحد الأقصى هو 10 صور لكل منتج.';
+    err.hidden = false;
+    btn.disabled = false; btn.textContent = '💾 حفظ التعديلات';
+    return;
   }
 
+  // رفع الصور الجديدة
+  let newUploadedUrls = [];
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    const fileName = `prod-${Date.now()}-${i}.${file.name.split('.').pop()}`;
+    const { error: uploadError } = await sb.storage.from('vendor-assets').upload(fileName, file);
+    if (!uploadError) {
+      const { data } = sb.storage.from('vendor-assets').getPublicUrl(fileName);
+      newUploadedUrls.push(data.publicUrl);
+    }
+  }
+
+  const finalImages = [...currentImages, ...newUploadedUrls];
+  const mainImage = finalImages.length > 0 ? finalImages[0] : '';
+
   const updates = {
-    name: { ar: document.getElementById('prodName').value, fr: document.getElementById('prodName').value, en: document.getElementById('prodName').value },
+    name: { ar: document.getElementById('prodName').value, fr: '', en: '' },
     price: Number(document.getElementById('prodPrice').value),
     stock: Number(document.getElementById('prodStock').value),
-    cat: document.getElementById('prodCat').value,
     description: { ar: document.getElementById('prodDesc').value, fr: '', en: '' },
-    img: finalImageUrl
+    img: mainImage,
+    gallery: finalImages // حفظ المصفوفة المحدثة
   };
 
   const { error: updateError } = await sb.from('products').update(updates).eq('id', id);
