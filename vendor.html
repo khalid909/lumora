@@ -125,7 +125,11 @@
             <option value="sport">رياضة</option>
           </select>
         </label>
-        <label style="grid-column:1/-1"><span>صورة المنتج (من الجهاز)</span><input type="file" id="prodImgFile" accept="image/*"></label>
+        <label style="grid-column:1/-1">
+  <span>صور المنتج (يمكنك اختيار حتى 10 صور)</span>
+  <input type="file" id="prodImgFile" accept="image/*" multiple>
+  <small class="muted" style="display:block; margin-top:5px;">الصورة الأولى ستكون الصورة الرئيسية.</small>
+</label>
         <label style="grid-column:1/-1"><span>أو رابط الصورة (اختياري)</span><input type="url" name="img" placeholder="https://..."></label>
         <button type="submit" class="btn" style="grid-column:1/-1">حفظ المنتج</button>
         <p class="err" id="prodErr" hidden style="grid-column:1/-1"></p>
