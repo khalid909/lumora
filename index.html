@@ -2,193 +2,226 @@
 <html lang="ar" dir="rtl" data-theme="light">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Lumora — تسوّق بذكاء</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lumora — منصة المتاجر الإلكترونية</title>
+<meta name="description" content="أنشئ متجرك الإلكتروني في دقائق. تسوق من أفضل المتاجر.">
 <meta name="theme-color" content="#6d4aff">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root {
   --bg: #f7f6fc; --surface: #fff; --surface2: #f1effa; --text: #15122b; --muted: #6a6786;
-  --line: #e7e4f3; --p: #6d4aff; --danger: #ff4d6d; --a: #00c896;
-  --grad: linear-gradient(135deg, #6d4aff 0%, #a64bff 55%, #ff6bb5 100%);
-  --shadow: 0 12px 32px -14px rgba(60,40,140,.28);
+  --p: #6d4aff; --a: #00c896; --grad: linear-gradient(135deg, #6d4aff 0%, #a64bff 55%, #ff6bb5 100%);
+  --shadow: 0 20px 40px -10px rgba(60,40,140,.15); --radius: 24px;
 }
 [data-theme=dark] {
-  --bg: #0c0a1a; --surface: #151229; --surface2: #1d1a36; --text: #f3f1ff; --muted: #a29fc4; --line: #292546;
-  --shadow: 0 12px 32px -14px rgba(0,0,0,.7);
+  --bg: #0c0a1a; --surface: #151229; --surface2: #1d1a36; --text: #f3f1ff; --muted: #a29fc4;
+  --shadow: 0 20px 40px -10px rgba(0,0,0,.6);
 }
 * { box-sizing: border-box; margin: 0; font-family: 'Tajawal', 'Inter', sans-serif; }
-body { background: var(--bg); color: var(--text); line-height: 1.5; min-height: 100vh; overflow-x: hidden; }
+body { background: var(--bg); color: var(--text); line-height: 1.6; overflow-x: hidden; }
 a { text-decoration: none; color: inherit; }
 button { cursor: pointer; border: 0; background: none; font: inherit; color: inherit; }
-.wrap { width: min(1180px, 100% - 32px); margin-inline: auto; }
+.wrap { width: min(1200px, 100% - 40px); margin-inline: auto; }
 
-/* Topbars */
-.topbar { background: var(--grad); color: #fff; text-align: center; font-size: .82rem; padding: 7px 12px; font-weight: 600; }
-.vendor-bar { background: #000; color: #fff; text-align: center; font-size: .85rem; padding: 8px; }
-.vendor-bar a { color: var(--a); font-weight: bold; }
-
-/* Header */
-.header { position: sticky; top: 0; z-index: 30; background: var(--surface); border-bottom: 1px solid var(--line); }
-.hrow { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; gap: 14px; }
-.logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 1.25rem; }
+/* Navbar */
+.navbar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(255,255,255,0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(0,0,0,0.05); transition: 0.3s; }
+[data-theme=dark] .navbar { background: rgba(12,10,26,0.8); border-bottom: 1px solid rgba(255,255,255,0.05); }
+.nav-inner { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; }
+.logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 1.4rem; }
 .logo span { background: var(--grad); -webkit-background-clip: text; color: transparent; }
-.search { display: flex; align-items: center; gap: 8px; background: var(--surface2); border-radius: 999px; padding: 8px 16px; flex: 1; max-width: 500px; }
-.search input { flex: 1; border: 0; background: none; outline: none; font-size: 1rem; }
-.actions { display: flex; align-items: center; gap: 10px; }
-.icon-btn { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; font-size: 1.2rem; background: var(--surface2); transition: 0.2s; }
-.icon-btn:hover { background: var(--line); }
+.nav-links { display: flex; gap: 24px; font-weight: 600; color: var(--muted); }
+.nav-links a:hover { color: var(--p); }
+.nav-actions { display: flex; gap: 12px; align-items: center; }
+.btn-outline { padding: 10px 20px; border-radius: 999px; font-weight: 700; border: 2px solid var(--p); color: var(--p); transition: 0.2s; }
+.btn-outline:hover { background: var(--p); color: #fff; }
+.btn-primary { padding: 10px 24px; border-radius: 999px; font-weight: 700; background: var(--grad); color: #fff; transition: 0.2s; box-shadow: 0 8px 16px -6px rgba(109,74,255,0.6); }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 20px -6px rgba(109,74,255,0.8); }
 
 /* Hero */
-.hero { padding: 60px 0; background: radial-gradient(circle at 50% 0%, rgba(109,74,255,0.1), transparent 60%); text-align: center; }
-.hero h1 { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 800; margin-bottom: 16px; }
-.hero p { color: var(--muted); font-size: 1.1rem; margin-bottom: 24px; }
-.btn { display: inline-flex; align-items: center; justify-content: center; background: var(--grad); color: #fff; font-weight: 700; padding: 12px 24px; border-radius: 999px; transition: 0.2s; font-size: 1rem; }
-.btn:hover { opacity: 0.9; transform: translateY(-2px); }
+.hero { padding: 160px 0 80px; position: relative; text-align: center; overflow: hidden; }
+.hero::before { content: ''; position: absolute; top: -100px; left: 50%; transform: translateX(-50%); width: 800px; height: 800px; background: radial-gradient(circle, rgba(109,74,255,0.15) 0%, transparent 70%); z-index: -1; }
+.hero h1 { font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 800; line-height: 1.2; margin-bottom: 24px; letter-spacing: -0.02em; }
+.hero h1 span { background: var(--grad); -webkit-background-clip: text; color: transparent; }
+.hero p { font-size: clamp(1.1rem, 2vw, 1.3rem); color: var(--muted); max-width: 600px; margin: 0 auto 40px; }
+.hero-btns { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
+.btn-large { padding: 16px 36px; font-size: 1.1rem; }
 
-/* Grid & Cards */
-.section-title { font-size: 1.5rem; margin: 30px 0 20px; font-weight: 800; }
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; padding-bottom: 50px; }
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; transition: 0.3s; display: flex; flex-direction: column; }
-.card:hover { box-shadow: var(--shadow); transform: translateY(-4px); border-color: var(--p); }
-.card-img { aspect-ratio: 1; background: var(--surface2); display: flex; align-items: center; justify-content: center; overflow: hidden; }
-.card-img img { width: 100%; height: 100%; object-fit: cover; transition: 0.3s; }
-.card:hover .card-img img { transform: scale(1.05); }
-.card-body { padding: 16px; flex: 1; display: flex; flex-direction: column; }
-.card-body h3 { font-size: 1.05rem; margin-bottom: 8px; line-height: 1.4; }
-.card-price { font-size: 1.3rem; font-weight: 800; color: var(--p); margin-top: auto; }
+/* Features */
+.features { padding: 80px 0; background: var(--surface); }
+.section-title { text-align: center; font-size: 2rem; font-weight: 800; margin-bottom: 50px; }
+.features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
+.feature-card { background: var(--bg); padding: 40px 30px; border-radius: var(--radius); text-align: center; transition: 0.3s; border: 1px solid var(--line); }
+.feature-card:hover { transform: translateY(-5px); box-shadow: var(--shadow); }
+.feature-icon { font-size: 3rem; margin-bottom: 20px; display: inline-block; padding: 20px; background: var(--surface2); border-radius: 20px; }
+.feature-card h3 { font-size: 1.3rem; margin-bottom: 12px; }
+.feature-card p { color: var(--muted); }
+
+/* Steps */
+.steps { padding: 100px 0; }
+.steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 40px; position: relative; }
+.step { text-align: center; position: relative; }
+.step-num { width: 60px; height: 60px; background: var(--grad); color: #fff; font-size: 1.5rem; font-weight: 800; border-radius: 50%; display: grid; place-items: center; margin: 0 auto 20px; box-shadow: 0 10px 20px -5px rgba(109,74,255,0.5); }
+.step h3 { font-size: 1.2rem; margin-bottom: 10px; }
+.step p { color: var(--muted); }
 
 /* Footer */
-.footer { background: var(--surface); border-top: 1px solid var(--line); padding: 40px 0 20px; margin-top: auto; }
-.footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 30px; margin-bottom: 30px; }
-.footer-col h4 { margin-bottom: 15px; font-size: 1.1rem; }
-.footer-col ul { list-style: none; padding: 0; display: grid; gap: 10px; }
+.footer { background: var(--surface); padding: 60px 0 30px; border-top: 1px solid var(--line); }
+.footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 40px; margin-bottom: 40px; }
+.footer-col h4 { font-size: 1.1rem; margin-bottom: 20px; }
+.footer-col ul { list-style: none; padding: 0; display: grid; gap: 12px; }
 .footer-col a { color: var(--muted); transition: 0.2s; }
 .footer-col a:hover { color: var(--p); }
-.copy { text-align: center; color: var(--muted); font-size: 0.9rem; border-top: 1px solid var(--line); padding-top: 20px; }
+.footer-bottom { text-align: center; color: var(--muted); border-top: 1px solid var(--line); padding-top: 30px; font-size: 0.9rem; }
+
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+}
 </style>
 </head>
 <body>
 
-<div class="vendor-bar">
-  🏪 هل تريد بيع منتجاتك على Lumora؟ <a href="become-vendor.html">افتح متجرك مجاناً ←</a>
-</div>
-<div class="topbar">
-  🚚 توصيل سريع • 💳 الدفع عند الاستلام • ↩️ إرجاع سهل خلال 14 يوماً
-</div>
-
-<header class="header">
-  <div class="wrap hrow">
+<nav class="navbar">
+  <div class="wrap nav-inner">
     <a href="./" class="logo">
-      <img src="icon.svg" alt="" width="34" height="34">
+      <img src="icon.svg" alt="" width="32" height="32">
       <span>Lumora</span>
     </a>
-    <div class="search">
-      <span>🔍</span>
-      <input type="text" id="searchInput" placeholder="ابحث عن منتج..." onkeyup="filterProducts()">
+    <div class="nav-links">
+      <a href="stores.html">تصفح المتاجر</a>
+      <a href="become-vendor.html">انضم كتاجر</a>
+      <a href="policies.html">الأسعار</a>
     </div>
-    <div class="actions">
-      <a href="login.html" class="icon-btn" title="حسابي">👤</a>
-      <a href="stores.html" class="icon-btn" title="المتاجر">🏪</a>
+    <div class="nav-actions">
+      <a href="login.html" class="btn-outline">دخول</a>
+      <a href="become-vendor.html" class="btn-primary">افتح متجرك</a>
     </div>
   </div>
-</header>
+</nav>
 
-<main>
-  <section class="hero">
-    <div class="wrap">
-      <h1>تسوّق بذكاء، واستمتع بكل لحظة</h1>
-      <p>منتجات مختارة بعناية وأسعار مميزة من أفضل المتاجر.</p>
-      <a href="#products" class="btn">ابدأ التسوق الآن</a>
+<section class="hero">
+  <div class="wrap">
+    <h1>أنشئ متجرك الإلكتروني <br><span>في دقائق معدودة</span></h1>
+    <p>منصة متكاملة تمنحك كل ما تحتاجه لتبدأ البيع عبر الإنترنت. بدون خبرة تقنية، وبدون تكاليف باهظة.</p>
+    <div class="hero-btns">
+      <a href="become-vendor.html" class="btn-primary btn-large">ابدأ تجربتك المجانية</a>
+      <a href="stores.html" class="btn-outline btn-large">تصفح المتاجر</a>
     </div>
-  </section>
+  </div>
+</section>
 
-  <section class="wrap" id="products">
-    <h2 class="section-title">أحدث المنتجات</h2>
-    <div class="grid" id="productsGrid">
-      <p style="grid-column: 1/-1; text-align: center; color: var(--muted); padding: 40px;">جاري تحميل المنتجات...</p>
+<section class="features">
+  <div class="wrap">
+    <h2 class="section-title">لماذا تختار Lumora؟</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🚀</div>
+        <h3>انطلاق سريع</h3>
+        <p>أنشئ متجرك في أقل من 5 دقائق وأضف منتجاتك بسهولة تامة.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎨</div>
+        <h3>هوية مستقلة</h3>
+        <p>متجرك بشعارك، ألوانك، وحقوقك الخاصة. يظهر للزبون كمتجر مستقل تماماً.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💳</div>
+        <h3>دفع عند الاستلام</h3>
+        <p>نظام دفع سلس يقلل من مخاطر الشراء ويزيد من نسبة إتمام الطلبات.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>لوحة تحكم ذكية</h3>
+        <p>تابع مبيعاتك، أدر طلباتك، وتحكم في مخزونك من لوحة واحدة.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📦</div>
+        <h3>إدارة مخزون</h3>
+        <p>تنبيهات فورية عند نفاد المنتجات أو انخفاض المخزون.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🛡️</div>
+        <h3>أمان كامل</h3>
+        <p>بياناتك محمية بأحدث تقنيات التشفير وحماية ضد الاختراق.</p>
+      </div>
     </div>
-  </section>
-</main>
+  </div>
+</section>
+
+<section class="steps">
+  <div class="wrap">
+    <h2 class="section-title">كيف تبدأ؟</h2>
+    <div class="steps-grid">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>سجّل حسابك</h3>
+        <p>أدخل بريدك الإلكتروني واختر اسم متجرك.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>أضف منتجاتك</h3>
+        <p>ارفع صور المنتجات، وحدد الأسعار والمخزون.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>ابدأ البيع</h3>
+        <p>شارك رابط متجرك مع زبائنك واستقبل الطلبات فوراً.</p>
+      </div>
+    </div>
+  </div>
+</section>
 
 <footer class="footer">
   <div class="wrap">
     <div class="footer-grid">
       <div class="footer-col">
-        <h4 style="display:flex; align-items:center; gap:8px;"><img src="icon.svg" width="24"> Lumora</h2>
-        <p style="color:var(--muted); line-height:1.7; font-size:0.9rem;">منصة تجارية عصرية تجمع أفضل المتاجر والتجار في مكان واحد.</p>
+        <a href="./" class="logo" style="margin-bottom: 20px;">
+          <img src="icon.svg" alt="" width="28" height="28">
+          <span>Lumora</span>
+        </a>
+        <p style="color: var(--muted); font-size: 0.9rem;">المنصة الأولى لإنشاء المتاجر الإلكترونية بكل احترافية وسهولة.</p>
       </div>
       <div class="footer-col">
-        <h4>روابط سريعة</h4>
+        <h4>المنصة</h4>
         <ul>
+          <li><a href="become-vendor.html">افتح متجرك</a></li>
           <li><a href="stores.html">تصفح المتاجر</a></li>
-          <li><a href="become-vendor.html">انضم كتاجر</a></li>
-          <li><a href="login.html">تسجيل الدخول</a></li>
+          <li><a href="policies.html">الأسعار والباقات</a></li>
         </ul>
       </div>
       <div class="footer-col">
-        <h4>السياسات</h4>
+        <h4>الدعم</h4>
         <ul>
+          <li><a href="contact.html">اتصل بنا</a></li>
+          <li><a href="policies.html#faq">الأسئلة الشائعة</a></li>
           <li><a href="policies.html#privacy">سياسة الخصوصية</a></li>
-          <li><a href="policies.html#terms">الشروط والأحكام</a></li>
-          <li><a href="policies.html#returns">سياسة الاسترجاع</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>تابعنا</h4>
+        <ul>
+          <li><a href="#">إنستغرام</a></li>
+          <li><a href="#">فيسبوك</a></li>
+          <li><a href="#">تويتر</a></li>
         </ul>
       </div>
     </div>
-    <div class="copy">© 2026 Lumora — جميع الحقوق محفوظة</div>
+    <div class="footer-bottom">
+      © 2026 Lumora — جميع الحقوق محفوظة.
+    </div>
   </div>
 </footer>
 
 <script>
-const sb = window.supabase.createClient(
-  'https://mpoqvpqeysgoqjtcwtfk.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1wb3F2cHFleXNnb3FqdGN3dGZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0ODE1NTUsImV4cCI6MjEwNzA1NzU1NX0.i0YEZkxAmy4wEnX0QP8Hm2erm1bxPFmO6sp78clevb0'
-);
-const fmt = n => new Intl.NumberFormat('ar-DZ', { style: 'currency', currency: 'DZD', minimumFractionDigits: 0 }).format(n || 0);
-
-let allProducts = [];
-
-async function loadProducts() {
-  const grid = document.getElementById('productsGrid');
-  const { data, error } = await sb.from('products').select('*').order('id', { ascending: false });
-  
-  if (error || !data || data.length === 0) {
-    grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--muted); padding: 40px;">لا توجد منتجات حالياً. عد قريباً!</p>';
-    return;
+// تأثير بسيط عند التمرير
+window.addEventListener('scroll', () => {
+  const nav = document.querySelector('.navbar');
+  if (window.scrollY > 20) {
+    nav.style.boxShadow = '0 4px 20px rgba(0,0,0,0.05)';
+  } else {
+    nav.style.boxShadow = 'none';
   }
-
-  allProducts = data;
-  renderGrid(data);
-}
-
-function renderGrid(products) {
-  const grid = document.getElementById('productsGrid');
-  grid.innerHTML = products.map(p => `
-    <a href="product.html?id=${p.id}" class="card">
-      <div class="card-img">
-        ${p.img ? `<img src="${p.img}" loading="lazy" alt="${p.name?.ar}">` : `<span style="font-size: 4rem;">📦</span>`}
-      </div>
-      <div class="card-body">
-        <h3>${p.name?.ar || 'منتج'}</h3>
-        <div class="card-price">${fmt(p.price)}</div>
-      </div>
-    </a>
-  `).join('');
-}
-
-function filterProducts() {
-  const q = document.getElementById('searchInput').value.toLowerCase();
-  const filtered = allProducts.filter(p => 
-    (p.name?.ar && p.name.ar.toLowerCase().includes(q)) || 
-    (p.name?.fr && p.name.fr.toLowerCase().includes(q)) ||
-    (p.name?.en && p.name.en.toLowerCase().includes(q))
-  );
-  renderGrid(filtered);
-}
-
-loadProducts();
+});
 </script>
 </body>
 </html>
