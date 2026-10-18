@@ -9,41 +9,70 @@
 <link rel="stylesheet" href="css/style.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  .product-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; padding: 40px 0; }
-  @media(max-width: 768px) { .product-wrap { grid-template-columns: 1fr; gap: 20px; } }
+  .container { max-width: 1000px; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+  @media (max-width: 768px) { .container { grid-template-columns: 1fr; } }
+
+  /* قسم الصورة */
+  .product-image { background: var(--surface2); border-radius: 20px; overflow: hidden; border: 1px solid var(--line); position: relative; }
+  .product-image img { width: 100%; height: 100%; object-fit: cover; aspect-ratio: 1; display: block; }
+  .badge-offer { position: absolute; top: 15px; right: 15px; background: var(--grad); color: #fff; padding: 6px 14px; border-radius: 99px; font-weight: 800; font-size: 0.85rem; animation: pulse 2s infinite; }
   
-  .product-image { width: 100%; border-radius: 20px; overflow: hidden; background: var(--surface2); border: 1px solid var(--line); }
-  .product-image img { width: 100%; height: 100%; object-fit: cover; aspect-ratio: 1; }
+  /* قسم التفاصيل */
+  .product-info h1 { font-size: 1.8rem; margin-bottom: 10px; line-height: 1.3; }
+  .price-box { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+  .price-box .price { font-size: 2rem; font-weight: 800; color: var(--p); }
+  .price-box .old-price { color: var(--muted); text-decoration: line-through; font-size: 1.1rem; }
   
-  .product-info h1 { font-size: 2.2rem; margin-bottom: 10px; }
-  .product-price { font-size: 2rem; font-weight: 800; color: var(--p); margin-bottom: 20px; }
-  .product-desc { font-size: 1.05rem; line-height: 1.8; color: var(--muted); margin-bottom: 30px; padding-bottom: 30px; border-bottom: 1px solid var(--line); }
+  .features-list { list-style: none; padding: 0; margin: 20px 0; border-top: 1px solid var(--line); padding-top: 20px; }
+  .features-list li { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; font-size: 0.95rem; color: var(--text); }
+  .features-list li::before { content: '✓'; color: var(--a); font-weight: 800; }
+
+  .section-title { font-size: 1rem; font-weight: 800; margin-bottom: 12px; margin-top: 24px; }
   
-  .store-mini { display: flex; align-items: center; gap: 10px; padding: 12px; background: var(--surface2); border-radius: 12px; margin-bottom: 30px; text-decoration: none; color: inherit; }
-  .store-mini img { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; }
-  .store-mini .s-logo { width: 40px; height: 40px; border-radius: 8px; background: var(--grad); color: #fff; display: grid; place-items: center; font-weight: 800; }
-  .store-mini b { display: block; }
-  .store-mini small { color: var(--p); font-weight: 700; }
+  /* اختيار اللون */
+  .color-options { display: flex; gap: 10px; margin-bottom: 20px; }
+  .color-btn { width: 40px; height: 40px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: 0.2s; }
+  .color-btn.active { border-color: var(--p); transform: scale(1.1); }
   
-  .add-btn { padding: 16px 24px; font-size: 1.1rem; border-radius: 12px; width: 100%; }
+  /* الكمية */
+  .qty-box { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin-bottom: 24px; }
+  .qty-box button { width: 40px; height: 40px; background: var(--surface2); font-size: 1.2rem; font-weight: bold; }
+  .qty-box input { width: 50px; height: 40px; text-align: center; border: 0; font-weight: bold; font-size: 1.1rem; background: transparent; }
+
+  /* نموذج الطلب */
+  .order-form { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px; margin-top: 20px; }
+  .order-form h3 { margin-bottom: 16px; font-size: 1.2rem; }
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; font-size: 0.9rem; font-weight: 700; margin-bottom: 6px; }
+  .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface2); font-size: 1rem; outline: none; }
+  .form-group input:focus { border-color: var(--p); }
+  
+  /* الملخص */
+  .summary { background: var(--surface2); border-radius: 12px; padding: 16px; margin-top: 16px; }
+  .summary-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95rem; }
+  .summary-row.total { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 10px; font-weight: 800; font-size: 1.2rem; color: var(--p); }
+
+  .submit-btn { width: 100%; padding: 16px; font-size: 1.1rem; border-radius: 12px; margin-top: 20px; animation: glow 2s infinite; }
+
+  @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+  @keyframes glow { 0%, 100% { box-shadow: 0 0 10px rgba(109,74,255,0.4); } 50% { box-shadow: 0 0 20px rgba(109,74,255,0.8); } }
 </style>
 </head>
 <body>
 
-<div class="topbar store-topbar" style="background:var(--surface); border-bottom:1px solid var(--line); padding:12px;">
-  <div class="wrap" style="display:flex; justify-content:space-between; align-items:center;">
-    <a href="index.html" class="logo-text" style="font-weight:800; text-decoration:none; color:inherit; display:flex; align-items:center; gap:8px;">
+<!-- شريط علوي بسيط -->
+<div class="topbar" style="background:var(--surface); border-bottom:1px solid var(--line); padding:12px;">
+  <div style="max-width:1000px; margin:0 auto; display:flex; justify-content:space-between; align-items:center;">
+    <a href="index.html" style="font-weight:800; text-decoration:none; color:inherit; display:flex; align-items:center; gap:8px;">
       <img src="icon.svg" width="24" height="24" alt=""> Lumora
     </a>
-    <a href="javascript:history.back()" class="btn sm ghost">← العودة</a>
+    <a href="javascript:history.back()" class="btn sm ghost">← العودة للمتجر</a>
   </div>
 </div>
 
-<main class="wrap">
-  <div class="product-wrap" id="productContainer">
-    <p class="muted">جاري تحميل تفاصيل المنتج...</p>
-  </div>
-</main>
+<div class="container" id="productContainer">
+  <p class="muted" style="text-align:center; grid-column:1/-1;">جاري تحميل تفاصيل المنتج...</p>
+</div>
 
 <script>
 const sb = window.supabase.createClient(
@@ -52,68 +81,152 @@ const sb = window.supabase.createClient(
 );
 const fmt = n => new Intl.NumberFormat('ar-DZ', { style: 'currency', currency: 'DZD', minimumFractionDigits: 0 }).format(n || 0);
 
+let currentProduct = null;
+let currentQty = 1;
+const SHIPPING_FEE = 500; // سعر الشحن الثابت (يمكنك تغييره)
+
 async function loadProduct() {
   const params = new URLSearchParams(window.location.search);
   const id = params.get('id');
+  if (!id) return;
 
-  if (!id) {
-    document.getElementById('productContainer').innerHTML = '<p class="muted">خطأ: لم يتم تحديد المنتج.</p>';
-    return;
-  }
-
-  // جلب المنتج
-  const { data: product, error: pErr } = await sb.from('products').select('*').eq('id', id).maybeSingle();
-  if (pErr || !product) {
-    document.getElementById('productContainer').innerHTML = '<p class="muted">المنتج غير موجود.</p>';
-    return;
-  }
-
-  // جلب المتجر التابع له
-  const { data: vendor } = await sb.from('vendors').select('*').eq('id', product.vendor_id).maybeSingle();
-  if (vendor) {
-    document.title = product.name?.ar + ' - ' + vendor.store_name;
-    if (vendor.store_logo) document.getElementById('dynamicFavicon').href = vendor.store_logo;
-  }
-
-  // بناء صفحة المنتج
-  const storeHtml = vendor ? `
-    <a href="store.html?slug=${vendor.store_slug}" class="store-mini">
-      ${vendor.store_logo ? `<img src="${vendor.store_logo}" alt="">` : `<div class="s-logo">${vendor.store_name.charAt(0)}</div>`}
-      <div>
-        <b>${vendor.store_name}</b>
-        <small>زيارة المتجر ←</small>
-      </div>
-    </a>
-  ` : '';
+  const { data: product } = await sb.from('products').select('*').eq('id', id).maybeSingle();
+  if (!product) { document.getElementById('productContainer').innerHTML = '<p class="muted">المنتج غير موجود</p>'; return; }
+  
+  currentProduct = product;
+  
+  if (product.img) document.getElementById('dynamicFavicon').href = product.img;
 
   document.getElementById('productContainer').innerHTML = `
+    <!-- الصورة -->
     <div class="product-image">
+      <div class="badge-offer">عرض خاص: الدفع عند الاستلام</div>
       ${product.img 
         ? `<img src="${product.img}" alt="${product.name?.ar}">` 
-        : `<div style="width:100%; aspect-ratio:1; display:grid; place-items:center; font-size:6rem; color:var(--muted);">📦</div>`}
+        : `<div style="width:100%; aspect-ratio:1; display:grid; place-items:center; font-size:6rem;">📦</div>`}
     </div>
+
+    <!-- التفاصيل -->
     <div class="product-info">
-      ${storeHtml}
       <h1>${product.name?.ar || 'منتج'}</h1>
-      <div class="product-price">${fmt(product.price)}</div>
-      <div class="product-desc">
-        ${product.description?.ar || 'لا يوجد وصف تفصيلي لهذا المنتج.'}
-      </div>
       
-      <div style="display:flex; gap:10px; align-items:center; margin-bottom:20px;">
-        <label style="font-weight:bold;">الكمية:</label>
-        <input type="number" id="qty" value="1" min="1" max="${product.stock}" style="width:80px; padding:10px; border:1px solid var(--line); border-radius:8px; text-align:center;">
-        <span class="muted" style="font-size:0.9rem;">(متوفر ${product.stock} قطعة)</span>
+      <div class="price-box">
+        <span class="price">${fmt(product.price)}</span>
       </div>
 
-      <button class="btn add-btn" onclick="alert('سيتم ربط السلة قريباً!')">
-        🛒 أضف إلى السلة
-      </button>
+      <ul class="features-list">
+        <li>${product.description?.ar || 'منتج عالي الجودة يناسب احتياجاتك اليومية.'}</li>
+        <li>متوفر الآن في المخزون (${product.stock} قطعة)</li>
+        <li>الدفع عند الاستلام — اطلب الآن ويوصلك وين حبيت</li>
+      </ul>
+
+      <!-- نموذج الطلب -->
+      <div class="order-form">
+        <h3>🛒 اطلب الآن</h3>
+        
+        <div class="form-group">
+          <label>اللون</label>
+          <div class="color-options">
+            <button class="color-btn active" style="background:#000;"></button>
+            <button class="color-btn" style="background:#c19a6b;"></button>
+            <button class="color-btn" style="background:#1e3a8a;"></button>
+            <button class="color-btn" style="background:#dc2626;"></button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>الكمية</label>
+          <div class="qty-box">
+            <button onclick="updateQty(-1)">−</button>
+            <input type="number" id="qtyInput" value="1" min="1" max="${product.stock}" readonly>
+            <button onclick="updateQty(1)">+</button>
+          </div>
+        </div>
+
+        <h3 style="margin-top:20px; font-size:1.1rem;">معلومات الزبون</h3>
+        <div class="form-group">
+          <label>الاسم الكامل</label>
+          <input type="text" id="custName" placeholder="الاسم واللقب">
+        </div>
+        <div class="form-group">
+          <label>رقم الهاتف</label>
+          <input type="tel" id="custPhone" placeholder="05xxxxxxxx" dir="ltr">
+        </div>
+        <div class="form-group">
+          <label>العنوان (الولاية والبلدية)</label>
+          <input type="text" id="custAddress" placeholder="مثال: الجزائر العاصمة، بئر مراد رايس">
+        </div>
+
+        <div class="summary">
+          <div class="summary-row">
+            <span>سعر المنتج (1x)</span>
+            <span id="sumSubtotal">${fmt(product.price)}</span>
+          </div>
+          <div class="summary-row">
+            <span>سعر الشحن</span>
+            <span id="sumShipping">${fmt(SHIPPING_FEE)}</span>
+          </div>
+          <div class="summary-row total">
+            <span>الإجمالي المتوقع</span>
+            <span id="sumTotal">${fmt(product.price + SHIPPING_FEE)}</span>
+          </div>
+        </div>
+
+        <button class="btn submit-btn" onclick="submitOrder()">اطلب الآن (الدفع عند الاستلام)</button>
+      </div>
     </div>
   `;
 }
 
-loadProduct();
+function updateQty(change) {
+  const input = document.getElementById('qtyInput');
+  let val = parseInt(input.value) + change;
+  if (val < 1) val = 1;
+  if (val > currentProduct.stock) val = currentProduct.stock;
+  input.value = val;
+  currentQty = val;
+  
+  // تحديث الإجمالي
+  const subtotal = currentProduct.price * val;
+  document.getElementById('sumSubtotal').textContent = fmt(subtotal);
+  document.getElementById('sumTotal').textContent = fmt(subtotal + SHIPPING_FEE);
+}
+
+async function submitOrder() {
+  const name = document.getElementById('custName').value.trim();
+  const phone = document.getElementById('custPhone').value.trim();
+  const address = document.getElementById('custAddress').value.trim();
+
+  if (!name || !phone || !address) {
+    alert('الرجاء ملء جميع معلومات الزبون (الاسم، الهاتف، العنوان).');
+    return;
+  }
+
+  const orderId = 'ORD' + Math.floor(Math.random() * 1000000);
+  const total = (currentProduct.price * currentQty) + SHIPPING_FEE;
+
+  // إرسال الطلب إلى Supabase
+  const { error } = await sb.from('orders').insert([{
+    id: orderId,
+    customer_name: name,
+    phone: phone,
+    city: 'غير محدد', // يمكننا تحسينها لاحقاً
+    address: address,
+    notes: 'الكمية: ' + currentQty,
+    total_amount: total,
+    status: 'pending',
+    vendor_id: currentProduct.vendor_id,
+    items: [{ id: currentProduct.id, name: currentProduct.name?.ar, qty: currentQty, price: currentProduct.price }]
+  }]);
+
+  if (error) {
+    alert('حدث خطأ أثناء حفظ الطلب: ' + error.message);
+    return;
+  }
+
+  alert('🎉 تم استلام طلبك بنجاح! سنتصل بك قريباً للتأكيد.');
+  window.location.href = 'store.html?slug=' + (new URLSearchParams(window.location.search).get('slug') || '');
+}
 </script>
 </body>
 </html>
