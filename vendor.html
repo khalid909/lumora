@@ -32,15 +32,25 @@
   th, td { padding: 14px; text-align: right; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
   th { color: var(--muted); font-weight: 700; background: var(--surface2); }
   .prod-img { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; background: var(--surface2); }
-  .form-group { margin-bottom: 15px; }
-  .form-group label { display: block; font-weight: 700; margin-bottom: 8px; font-size: 0.9rem; }
-  .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface2); }
-  .btn-full { width: 100%; padding: 14px; font-size: 1rem; border-radius: 8px; margin-top: 10px; cursor: pointer; border: none; color: white; background: var(--grad); font-weight: bold; }
   
-  /* نافذة التعديل */
-  .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 100; }
+  .form-group { margin-bottom: 15px; }
+  .form-group label { display: block; font-weight: 700; margin-bottom: 8px; font-size: 0.9rem; color: var(--text); }
+  .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface2); font-family: inherit; color: var(--text); }
+  .btn-full { width: 100%; padding: 14px; font-size: 1rem; border-radius: 8px; margin-top: 10px; cursor: pointer; border: none; color: white; background: var(--grad); font-weight: bold; }
+
+  /* نافذة منبثقة */
+  .modal { position: fixed; inset: 0; background: rgba(10,8,25,0.6); display: none; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(4px); }
   .modal.active { display: flex; }
-  .modal-content { background: var(--surface); padding: 24px; border-radius: 16px; width: 100%; max-width: 400px; }
+  .modal-content { background: var(--surface); padding: 24px; border-radius: 16px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+  
+  /* تصميم معرض الصور */
+  .image-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 10px; margin-top: 10px; }
+  .img-preview { position: relative; aspect-ratio: 1; border-radius: 8px; overflow: hidden; border: 1px solid var(--line); background: var(--surface2); }
+  .img-preview img { width: 100%; height: 100%; object-fit: cover; }
+  .img-preview .del-img { position: absolute; top: 2px; right: 2px; background: rgba(255,0,0,0.8); color: #fff; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; font-size: 12px; display: grid; place-items: center; }
+  .upload-box { border: 2px dashed var(--line); border-radius: 8px; padding: 15px; text-align: center; cursor: pointer; position: relative; transition: 0.2s; background: var(--surface2); color: var(--muted); }
+  .upload-box:hover { border-color: var(--p); color: var(--p); }
+  .upload-box input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 
   @media(max-width: 900px) {
     .sidebar { transform: translateX(100%); transition: 0.3s; }
@@ -109,7 +119,16 @@
             <option value="sport">رياضة</option>
           </select>
         </div>
-        <div class="form-group"><label>رابط الصورة (اختياري)</label><input type="url" id="pImg" placeholder="https://..."></div>
+        
+        <div class="form-group">
+          <label>صور المنتج (حتى 10 صور)</label>
+          <div class="upload-box" id="addUploadBox">
+            <span>📸 اضغط لاختيار صور</span>
+            <input type="file" id="addImagesInput" accept="image/*" multiple>
+          </div>
+          <div class="image-gallery" id="addGallery"></div>
+        </div>
+
         <button type="submit" class="btn-full">حفظ المنتج</button>
       </form>
     </div>
@@ -125,6 +144,16 @@
       <div class="form-group"><label>اسم المنتج</label><input type="text" id="editName" required></div>
       <div class="form-group"><label>السعر</label><input type="number" id="editPrice" required></div>
       <div class="form-group"><label>المخزون</label><input type="number" id="editStock" required></div>
+      
+      <div class="form-group">
+        <label>صور المنتج الحالية</label>
+        <div class="image-gallery" id="editGallery"></div>
+        <div class="upload-box" style="margin-top:10px;">
+          <span>➕ إضافة صور جديدة</span>
+          <input type="file" id="editImagesInput" accept="image/*" multiple>
+        </div>
+      </div>
+
       <div style="display:flex; gap:10px; margin-top:15px;">
         <button type="submit" class="btn-full" style="margin:0;">حفظ</button>
         <button type="button" class="btn-full" onclick="closeModal()" style="margin:0; background:var(--muted);">إلغاء</button>
@@ -140,6 +169,10 @@ const sb = window.supabase.createClient(
 );
 const fmt = n => new Intl.NumberFormat('ar-DZ', { style: 'currency', currency: 'DZD', minimumFractionDigits: 0 }).format(n || 0);
 let currentVendor = null;
+
+// متغيرات لحفظ الصور
+let newImages = []; // للصور التي ترفع في نموذج الإضافة
+let editImages = []; // للصور في نموذج التعديل
 
 document.querySelectorAll('.nav-item').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -201,18 +234,77 @@ async function loadProducts() {
       <td>${fmt(p.price)}</td>
       <td>${p.stock}</td>
       <td style="white-space:nowrap;">
-        <button onclick="openEdit('${p.id}', '${p.name?.ar}', ${p.price}, ${p.stock})" style="background:none; border:none; cursor:pointer; font-size:1.1rem;" title="تعديل">✏️</button>
+        <button onclick="openEdit('${p.id}', '${p.name?.ar}', ${p.price}, ${p.stock}, '${p.gallery ? JSON.stringify(p.gallery).replace(/'/g, "&#39;") : '[]'}')" style="background:none; border:none; cursor:pointer; font-size:1.1rem;" title="تعديل">✏️</button>
         <button onclick="deleteProduct('${p.id}')" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:red;" title="حذف">🗑️</button>
       </td>
     </tr>`).join('')}
   </tbody></table>`;
 }
 
-// إضافة منتج
+// ---- دوال رفع الصور ----
+function renderGallery(containerId, imagesArray, isEdit = false) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = imagesArray.map((img, index) => `
+    <div class="img-preview">
+      <img src="${img}">
+      <button type="button" class="del-img" onclick="removeImage(${index}, '${isEdit ? 'edit' : 'add'}')">✕</button>
+    </div>
+  `).join('');
+}
+
+function removeImage(index, type) {
+  if (type === 'add') {
+    newImages.splice(index, 1);
+    renderGallery('addGallery', newImages, false);
+  } else {
+    editImages.splice(index, 1);
+    renderGallery('editGallery', editImages, true);
+  }
+}
+
+// معالجة اختيار الصور في "الإضافة"
+document.getElementById('addImagesInput').addEventListener('change', async (e) => {
+  const files = Array.from(e.target.files);
+  if (newImages.length + files.length > 10) { alert('الحد الأقصى 10 صور'); return; }
+  
+  for (const file of files) {
+    const url = await uploadImage(file);
+    if (url) newImages.push(url);
+  }
+  renderGallery('addGallery', newImages, false);
+  e.target.value = ''; // تصفير الحقل
+});
+
+// معالجة اختيار الصور في "التعديل"
+document.getElementById('editImagesInput').addEventListener('change', async (e) => {
+  const files = Array.from(e.target.files);
+  if (editImages.length + files.length > 10) { alert('الحد الأقصى 10 صور'); return; }
+  
+  for (const file of files) {
+    const url = await uploadImage(file);
+    if (url) editImages.push(url);
+  }
+  renderGallery('editGallery', editImages, true);
+  e.target.value = '';
+});
+
+// الدالة الأساسية لرفع الصورة
+async function uploadImage(file) {
+  const fileName = `prod-${Date.now()}-${Math.random().toString(36).substring(7)}.${file.name.split('.').pop()}`;
+  const { error } = await sb.storage.from('vendor-assets').upload(fileName, file);
+  if (error) { alert('خطأ في الرفع: ' + error.message); return null; }
+  const { data } = sb.storage.from('vendor-assets').getPublicUrl(fileName);
+  return data.publicUrl;
+}
+
+// ---- إضافة منتج ----
 document.getElementById('addProductForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const btn = e.target.querySelector('button');
+  const btn = e.target.querySelector('button[type=submit]');
   btn.disabled = true; btn.textContent = 'جاري الحفظ...';
+
+  const mainImage = newImages.length > 0 ? newImages[0] : '';
+  const galleryImages = newImages.slice(1);
 
   const { error } = await sb.from('products').insert([{
     vendor_id: currentVendor.id,
@@ -221,7 +313,8 @@ document.getElementById('addProductForm').addEventListener('submit', async (e) =
     price: Number(document.getElementById('pPrice').value),
     stock: Number(document.getElementById('pStock').value),
     cat: document.getElementById('pCat').value,
-    img: document.getElementById('pImg').value,
+    img: mainImage,
+    gallery: galleryImages,
     description: { ar: 'منتج جديد', fr: '', en: '' }
   }]);
 
@@ -229,15 +322,21 @@ document.getElementById('addProductForm').addEventListener('submit', async (e) =
   if (error) { alert(error.message); return; }
 
   document.getElementById('addProductForm').reset();
+  newImages = [];
+  renderGallery('addGallery', []);
   loadProducts();
 });
 
-// فتح نافذة التعديل
-function openEdit(id, name, price, stock) {
+// ---- التعديل ----
+function openEdit(id, name, price, stock, galleryJson) {
   document.getElementById('editId').value = id;
   document.getElementById('editName').value = name;
   document.getElementById('editPrice').value = price;
   document.getElementById('editStock').value = stock;
+  
+  try { editImages = JSON.parse(galleryJson); } catch { editImages = []; }
+  renderGallery('editGallery', editImages, true);
+  
   document.getElementById('editModal').classList.add('active');
 }
 
@@ -245,17 +344,21 @@ function closeModal() {
   document.getElementById('editModal').classList.remove('active');
 }
 
-// حفظ التعديلات
 document.getElementById('editProductForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const id = document.getElementById('editId').value;
   const btn = e.target.querySelector('button[type=submit]');
   btn.disabled = true; btn.textContent = 'جاري الحفظ...';
 
+  const mainImage = editImages.length > 0 ? editImages[0] : '';
+  const galleryImages = editImages.slice(1);
+
   const { error } = await sb.from('products').update({
     name: { ar: document.getElementById('editName').value, fr: '', en: '' },
     price: Number(document.getElementById('editPrice').value),
-    stock: Number(document.getElementById('editStock').value)
+    stock: Number(document.getElementById('editStock').value),
+    img: mainImage,
+    gallery: galleryImages
   }).eq('id', id);
 
   btn.disabled = false; btn.textContent = 'حفظ';
@@ -265,7 +368,6 @@ document.getElementById('editProductForm').addEventListener('submit', async (e) 
   loadProducts();
 });
 
-// حذف منتج
 async function deleteProduct(id) {
   if (!confirm('حذف هذا المنتج؟')) return;
   await sb.from('products').delete().eq('id', id);
