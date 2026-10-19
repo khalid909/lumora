@@ -76,7 +76,10 @@
 </aside>
 
 <main class="main-content">
-  <div class="top-bar"><h1 id="pageTitle">الرئيسية</h1></div>
+  <div class="top-bar">
+    <h1 id="pageTitle">الرئيسية</h1>
+    <a id="visitStoreBtn" href="#" target="_blank" class="btn sm">🔗 زيارة المتجر</a>
+  </div>
 
   <section class="page-section active" id="sec-home">
     <div class="welcome-banner">
@@ -137,7 +140,6 @@
     </div>
   </section>
 
-  <!-- استعادة قسم الإعدادات -->
   <section class="page-section" id="sec-settings">
     <div class="card">
       <h3 style="margin-bottom:20px;">إعدادات المتجر</h3>
@@ -164,7 +166,6 @@
   </section>
 </main>
 
-<!-- نافذة التعديل -->
 <div class="modal" id="editModal">
   <div class="modal-content">
     <h3 style="margin-bottom:20px;">تعديل المنتج</h3>
@@ -224,12 +225,14 @@ async function init() {
   currentVendor = vendor;
   updateStoreInfoUI(vendor);
   
+  // ربط زر زيارة المتجر
+  document.getElementById('visitStoreBtn').href = `store.html?slug=${vendor.store_slug}`;
+
   loadOrders();
   loadProducts();
   loadSettings();
 }
 
-// دالة موحدة لتحديث بيانات المتجر في الواجهة
 function updateStoreInfoUI(vendor) {
   document.getElementById('storeName').textContent = vendor.store_name;
   document.getElementById('setStoreName').value = vendor.store_name;
@@ -292,7 +295,6 @@ function loadSettings() {
   updateStoreInfoUI(currentVendor);
 }
 
-// --- قسم رفع الشعار ---
 document.getElementById('uploadLogoBtn').addEventListener('click', async () => {
   const file = document.getElementById('logoUpload').files[0];
   if (!file) return alert('الرجاء اختيار صورة');
@@ -307,7 +309,6 @@ document.getElementById('uploadLogoBtn').addEventListener('click', async () => {
 
   const { data } = sb.storage.from('vendor-assets').getPublicUrl(fileName);
   
-  // تحديث جدول المتاجر
   await sb.from('vendors').update({ store_logo: data.publicUrl }).eq('id', currentVendor.id);
   
   currentVendor.store_logo = data.publicUrl;
@@ -318,8 +319,6 @@ document.getElementById('uploadLogoBtn').addEventListener('click', async () => {
   document.getElementById('logoUpload').value = '';
 });
 
-
-// --- إدارة الصور ---
 function renderGallery(containerId, imagesArray, isEdit = false) {
   const container = document.getElementById(containerId);
   container.innerHTML = imagesArray.map((img, index) => `
@@ -370,7 +369,6 @@ async function uploadImage(file) {
   return data.publicUrl;
 }
 
-// --- إضافة منتج ---
 document.getElementById('addProductForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const btn = e.target.querySelector('button[type=submit]');
@@ -400,7 +398,6 @@ document.getElementById('addProductForm').addEventListener('submit', async (e) =
   loadProducts();
 });
 
-// --- التعديل ---
 function openEdit(id) {
   const p = allProductsData[id];
   if (!p) return;
